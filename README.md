@@ -20,15 +20,7 @@ Welcome to the **NID Data Extractor** repository! This guide will help you insta
    ```
    Open the Repository folder.
 
-3. **Install Required Packages**
-
-   Install the necessary packages listed in `requirements.txt` by running:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Create a Virtual Environment**
+3. **Create a Virtual Environment**
 
    It’s recommended to use a virtual environment to manage dependencies. Run the following command to create one:
 
@@ -37,17 +29,8 @@ Welcome to the **NID Data Extractor** repository! This guide will help you insta
    ```
    You can use any name instead of `myenv`
 
-5. **Modify EasyOCR Utility (if applicable)**
 
-   In the following file:
-
-   ```bash
-   myenv/lib/python3.12/site-packages/easyocr/utils.py
-   ```
-
-   Locate the function `compute_ratio_and_resize`, and replace all instances of `Image.ANTIALIAS` with `Image.LANCZOS`.
-
-6. **Activate the Virtual Environment**
+4. **Activate the Virtual Environment**
 
    Activate the virtual environment:
 
@@ -58,9 +41,28 @@ Welcome to the **NID Data Extractor** repository! This guide will help you insta
    - **macOS/Linux**:
      ```bash
      source myenv/bin/activate
-     ```
+     ``` 
+5. **Install Required Packages**
 
-7. **Run the Script**
+   Install the necessary packages listed in `requirements.txt` by running:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+6. **Modify EasyOCR Utility**
+
+   In the following file:
+
+   ```bash
+   myenv/lib/python3.12/site-packages/easyocr/utils.py
+   ```
+
+   Locate the function `compute_ratio_and_resize`, and replace all instances of `Image.ANTIALIAS` with `Image.LANCZOS`.
+
+ 
+
+8. **Run the Script**
 
    Execute the main script by running:
 
@@ -68,7 +70,7 @@ Welcome to the **NID Data Extractor** repository! This guide will help you insta
    python read_fields.py
    ```
 
-8. **Optional Configuration**
+9. **Optional Configuration**
 
    To change the directory path for the NID images, update the file path in `read_fields.py` as required.
 
