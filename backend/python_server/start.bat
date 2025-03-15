@@ -1,0 +1,3 @@
+@echo off
+echo Starting NID Extraction Server...
+python app.py 

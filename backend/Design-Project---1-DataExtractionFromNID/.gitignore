@@ -1,0 +1,49 @@
+# Ignore environment folder
+myenv/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Ignore virtual environments
+env/
+venv/
+ENV/
+.venv/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore log files
+*.log
+
+# Ignore IDE/editor settings
+.vscode/
+.idea/
+*.swp
+
+# Ignore other environment files
+*.env
+.env.*
+*.envrc
+
+# Ignore common backup files
+*.bak
+*.old
+*.orig
+
+# Ignore compiled files
+*.out
+*.o
+
+# Ignore package managers
+node_modules/
+yarn.lock
+
+# Ignore and output files i 
+output.png
+
+# Ignore Git specific files
+.git/
