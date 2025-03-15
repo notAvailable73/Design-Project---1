@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Outlet,
+} from "react-router-dom";
 import React from "react";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
@@ -8,6 +13,7 @@ import UserProfile from "./pages/UserProfile";
 import Header from "./components/Header";
 import { ToastContainer } from "react-toastify"; // Import ToastContainer
 import "react-toastify/dist/ReactToastify.css"; // Import the CSS for toast notifications
+import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
@@ -31,10 +37,14 @@ export default function App() {
 
         {/* Routes */}
         <Routes>
-          <Route path="/" element={<Home />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/user-profile" element={<UserProfile />} />
+          <Route element={<ProtectedRoute />}>
+            {" "}
+            {/* Protected Route */}
+            <Route path="/" element={<Home />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

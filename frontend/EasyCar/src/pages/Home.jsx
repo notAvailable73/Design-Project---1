@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import ProfilePic from "../components/ProfilePic";
 
 const Home = () => {
+  useEffect(() => {
+    // Fetch user info from localStorage
+    const storedUserInfo = localStorage.getItem("token");
+    console.log(storedUserInfo);
+  }, []);
   return (
     <div>
       {" "}
