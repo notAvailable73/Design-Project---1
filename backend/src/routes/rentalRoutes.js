@@ -16,4 +16,4 @@ router.post('/', protect, isVerified, createRental);
 router.put('/:id/status', protect, isVerified, updateRentalStatus);
 router.post('/:id/review', protect, isVerified, submitReview);
 
-export default router; 
+export default router;   

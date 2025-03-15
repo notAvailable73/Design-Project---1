@@ -17,7 +17,7 @@ const locationSchema = new mongoose.Schema({
             required: true
         }
     },
-    timestamp: {
+    timestamp: { 
         type: Date,
         default: Date.now
     }
