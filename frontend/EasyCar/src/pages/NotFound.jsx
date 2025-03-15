@@ -22,7 +22,7 @@ export default function NotFound() {
         {/* Back to Home Button */}
         <Link
           to="/"
-          className="inline-flex items-center px-6 py-3 bg-white text-purple-600 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition-all duration-300"
+          className="inline-flex items-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition-all duration-300"
         >
           <FaHome className="mr-2" />
           Go Back Home
