@@ -18,7 +18,7 @@ export const createRental = async (req, res) => {
             car: carId,
             status: { $in: ['pending', 'accepted'] },
             $or: [
-                {
+                { 
                     startDate: { $lte: endDate },
                     endDate: { $gte: startDate }
                 }

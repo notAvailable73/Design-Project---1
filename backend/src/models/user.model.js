@@ -30,6 +30,13 @@ const userSchema = new mongoose.Schema({
     nidImage: {
         type: String
     },
+    extractedNidData: {
+        englishName: String,
+        banglaName: String,
+        fatherName: String,
+        motherName: String,
+        birthDate: String
+    },
     createdAt: {
         type: Date,
         default: Date.now
