@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
+import UserProfile from "./pages/UserProfile";
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
           <Route path="/" exact element={<Home />} />
           <Route path="/signup" exact element={<SignUp />} />
           <Route path="/login" exact element={<Login />} />
+          <Route path="/user-profile" exact element={<UserProfile />} />
           <Route path="*" element={<NotFound />} />
           {/* Add this new route */}
         </Routes>
