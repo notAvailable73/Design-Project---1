@@ -64,7 +64,7 @@ def get_rating(review):
     else:  # > 0.6 originally
         rating=5
     
-    print(f"(Polarity score: {polarity:.3f})")
+    print(f"{polarity:.3f}")
     return rating
 
 if __name__ == "__main__":

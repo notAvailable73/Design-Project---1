@@ -56,10 +56,15 @@ app.post("/run-python", (req, res) => {
       if (error) {
         return res.send(`<p>Error: ${stderr}</p>`);
       }
-      const rating = stdout.trim();
+      // const rating = stdout.trim();
+      // Split the stdout by lines and extract information
+      const lines = stdout.trim().split('\n');
+      const polarityLine = lines[0]; // Contains the polarity score
+      const rating = lines[1];       // Contains just the rating number
       res.send(`
         <h3>Review: "${userReview}"</h3>
         <h3>Assigned Rating: ${rating} / 5</h3>
+        <h3>Polarity Score (0~2): ${polarityLine}</h3>
       `);
     });
 });
