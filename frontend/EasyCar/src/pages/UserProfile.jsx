@@ -128,20 +128,6 @@ export default function UserProfile() {
             />
           </div>
 
-          {/* Address Field */}
-          <div className="relative">
-            <FaMapMarkerAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              name="address"
-              placeholder="Address"
-              value={userData.address}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-3 bg-gray-700 rounded-lg focus:outline-none text-gray-500 cursor-not-allowed"
-              required
-            />
-          </div>
-
           {/* Phone Field */}
           <div className="relative">
             <FaPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />

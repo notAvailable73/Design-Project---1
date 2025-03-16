@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 
 export default function Header() {
   const [userProfile, setUserProfile] = useState(null); // User profile data
-  const size = "12";
+  const size = "14";
   const navigate = useNavigate();
   const handlelogout = () => {
     localStorage.clear();
@@ -47,8 +47,7 @@ export default function Header() {
           <>
             <div className="">
               <ProfilePic username={userProfile} size={size} />
-              <br />
-              <button className="underline mt-2" onClick={handlelogout}>
+              <button className="underline ml-2" onClick={handlelogout}>
                 Logout
               </button>
             </div>

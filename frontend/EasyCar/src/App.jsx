@@ -14,6 +14,7 @@ import Header from "./components/Header";
 import { ToastContainer } from "react-toastify"; // Import ToastContainer
 import "react-toastify/dist/ReactToastify.css"; // Import the CSS for toast notifications
 import ProtectedRoute from "./components/ProtectedRoute";
+import Sidebar from "./components/SideBar";
 
 export default function App() {
   return (
@@ -34,19 +35,24 @@ export default function App() {
 
         {/* Header */}
         <Header />
-
-        {/* Routes */}
-        <Routes>
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/user-profile" element={<UserProfile />} />
-          <Route element={<ProtectedRoute />}>
-            {" "}
-            {/* Protected Route */}
-            <Route path="/" element={<Home />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <div className="flex">
+          {/* Sidebar */}
+          <Sidebar />
+          <div className="flex-1 p-4">
+            {/* Routes */}
+            <Routes>
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/user-profile" element={<UserProfile />} />
+              <Route element={<ProtectedRoute />}>
+                {" "}
+                {/* Protected Route */}
+                <Route path="/" element={<Home />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+        </div>
       </Router>
     </div>
   );
