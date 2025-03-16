@@ -4,15 +4,22 @@ import {
     loginUser,
     getUserProfile,
     updateUserProfile,
-    submitVerification
+    submitVerification,
+    verifyOTP,
+    resendOTP
 } from '../controllers/user.controller.js';
 import { protect, isVerified } from '../middlewares/auth.middleware.js';
 import upload from '../config/multer.js';
 
 const router = express.Router();
 
+// Public routes
 router.post('/register', registerUser);
+router.post('/verify-otp', verifyOTP);
+router.post('/resend-otp', resendOTP);
 router.post('/login', loginUser);
+
+// Protected routes
 router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateUserProfile);
 router.post('/verify', protect, upload.single('nidImage'), submitVerification);
