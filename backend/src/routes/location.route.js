@@ -2,14 +2,21 @@ import express from 'express';
 import {
     updateLocation,
     getLocation,
-    getNearbyCars
+    searchCarsByLocation,
+    getAllDistricts,
+    getDistrictSubDistricts
 } from '../controllers/location.controller.js';
-import { protect, isVerified } from '../middlewares/auth.middleware.js';
+import { protect } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
-router.put('/:carId', protect, isVerified, updateLocation);
-router.get('/:carId', protect, isVerified, getLocation);
-router.get('/nearby', getNearbyCars);
+// Public routes
+router.get('/search', searchCarsByLocation);
+router.get('/districts', getAllDistricts);
+router.get('/districts/:districtName/sub-districts', getDistrictSubDistricts);
+
+// Protected routes
+router.get('/:carId', protect, getLocation);
+router.put('/:carId', protect, updateLocation);
 
 export default router;

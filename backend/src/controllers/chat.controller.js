@@ -1,4 +1,4 @@
-import Chat from '../models/Chat.model.js';
+import Chat from '../models/chat.model.js';
 
 // @desc    Get user's chats
 // @route   GET /api/chats

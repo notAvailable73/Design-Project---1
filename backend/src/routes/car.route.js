@@ -5,19 +5,24 @@ import {
     getCarById,
     updateCar,
     deleteCar,
-    getOwnerCars
+    getUserCars,
+    getUserCarsByUserId
 } from '../controllers/car.controller.js';
 import { protect, isVerified } from '../middlewares/auth.middleware.js';
-import { upload } from '../config/cloudinary.js';
+import upload from '../config/multer.js';
 
 const router = express.Router();
 
+// Public routes
 router.get('/', getCars);
-router.get('/:id', getCarById);
-router.get('/owner/:ownerId', getOwnerCars);
 
-// Protected routes (verified users only)
-router.post('/', protect, isVerified, upload.array('images', 5), createCar);
+// User car routes
+router.get('/user/me', protect, getUserCars);
+router.get('/user/:userId', getUserCarsByUserId);
+
+// Car CRUD routes
+router.get('/:id', getCarById);
+router.post('/', protect, isVerified, upload.array('images',5), createCar);
 router.put('/:id', protect, isVerified, upload.array('images', 5), updateCar);
 router.delete('/:id', protect, isVerified, deleteCar);
 

@@ -1,61 +1,152 @@
-import Rental from '../models/Rental.model.js';
-import Car from '../models/Car.model.js';
+import Rental from '../models/rental.model.js';
+import CarListing from '../models/carListing.model.js';
+import Car from '../models/car.model.js';
+import User from '../models/user.model.js';
+import { sendEmail } from '../utils/emailService.js';
+import { isValidDistrict, isValidSubDistrict } from '../utils/locations.js';
 
-// @desc    Create new rental request
+// @desc    Create a new rental
 // @route   POST /api/rentals
 // @access  Private
 export const createRental = async (req, res) => {
     try {
-        const { carId, startDate, endDate, proposedPrice } = req.body;
-
-        const car = await Car.findById(carId);
-        if (!car) {
-            return res.status(404).json({ message: 'Car not found' });
+        const { 
+            carListingId, 
+            startDate, 
+            endDate, 
+            pickupLocation, 
+            returnLocation 
+        } = req.body;
+        
+        // Validate pickup location data
+        if (!pickupLocation || !pickupLocation.district || !pickupLocation.subDistrict || !pickupLocation.address) {
+            return res.status(400).json({ message: 'Complete pickup location (district, subDistrict, address) is required' });
         }
-
-        // Check if car is available for the requested dates
+        
+        // Validate return location data
+        if (!returnLocation || !returnLocation.district || !returnLocation.subDistrict || !returnLocation.address) {
+            return res.status(400).json({ message: 'Complete return location (district, subDistrict, address) is required' });
+        }
+        
+        // Validate district and sub-district for pickup location
+        if (!isValidDistrict(pickupLocation.district)) {
+            return res.status(400).json({ message: 'Invalid pickup district' });
+        }
+        
+        if (!isValidSubDistrict(pickupLocation.district, pickupLocation.subDistrict)) {
+            return res.status(400).json({ message: 'Invalid pickup sub-district for the selected district' });
+        }
+        
+        // Validate district and sub-district for return location
+        if (!isValidDistrict(returnLocation.district)) {
+            return res.status(400).json({ message: 'Invalid return district' });
+        }
+        
+        if (!isValidSubDistrict(returnLocation.district, returnLocation.subDistrict)) {
+            return res.status(400).json({ message: 'Invalid return sub-district for the selected district' });
+        }
+        
+        // Find the car listing
+        const carListing = await CarListing.findById(carListingId)
+            .populate('car')
+            .populate('owner');
+            
+        if (!carListing) {
+            return res.status(404).json({ message: 'Car listing not found' });
+        }
+        
+        // Check if the car is available for the requested dates
+        const startDateObj = new Date(startDate);
+        const endDateObj = new Date(endDate);
+        
+        if (startDateObj >= endDateObj) {
+            return res.status(400).json({ message: 'End date must be after start date' });
+        }
+        
+        // Check if the car is already booked for the requested dates
         const existingRental = await Rental.findOne({
-            car: carId,
+            carListing: carListingId,
             status: { $in: ['pending', 'accepted'] },
             $or: [
+                // New rental starts during an existing rental
                 { 
-                    startDate: { $lte: endDate },
-                    endDate: { $gte: startDate }
+                    startDate: { $lte: startDateObj },
+                    endDate: { $gte: startDateObj }
+                },
+                // New rental ends during an existing rental
+                {
+                    startDate: { $lte: endDateObj },
+                    endDate: { $gte: endDateObj }
+                },
+                // New rental completely encompasses an existing rental
+                {
+                    startDate: { $gte: startDateObj },
+                    endDate: { $lte: endDateObj }
                 }
             ]
         });
-
+        
         if (existingRental) {
-            return res.status(400).json({ message: 'Car is not available for these dates' });
+            return res.status(400).json({ message: 'Car is not available for the selected dates' });
         }
-
-        const rental = await Rental.create({
-            car: carId,
+        
+        // Calculate total price
+        const days = Math.ceil((endDateObj - startDateObj) / (1000 * 60 * 60 * 24));
+        const totalPrice = days * carListing.price;
+        
+        // Create the rental
+        const rental = new Rental({
+            carListing: carListingId,
+            car: carListing.car._id,
             renter: req.user._id,
-            owner: car.owner,
-            startDate,
-            endDate,
-            proposedPrice
+            owner: carListing.owner._id,
+            startDate: startDateObj,
+            endDate: endDateObj,
+            totalPrice,
+            pickupLocation: {
+                properties: {
+                    district: pickupLocation.district,
+                    subDistrict: pickupLocation.subDistrict,
+                    address: pickupLocation.address
+                }
+            },
+            returnLocation: {
+                properties: {
+                    district: returnLocation.district,
+                    subDistrict: returnLocation.subDistrict,
+                    address: returnLocation.address
+                }
+            }
         });
-
+        
+        await rental.save();
+        
         res.status(201).json(rental);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Get user's rentals
+// @desc    Get all rentals for the current user (as renter or owner)
 // @route   GET /api/rentals
 // @access  Private
 export const getRentals = async (req, res) => {
     try {
+        const userId = req.user._id;
+        
+        // Find rentals where user is either the renter or owner
         const rentals = await Rental.find({
-            $or: [{ renter: req.user._id }, { owner: req.user._id }]
+            $or: [
+                { renter: userId },
+                { owner: userId }
+            ]
         })
-        .populate('car', 'brand model year')
-        .populate('renter', 'name email')
-        .populate('owner', 'name email');
-
+            .populate('car')
+            .populate('carListing')
+            .populate('renter', 'name email')
+            .populate('owner', 'name email')
+            .sort('-createdAt');
+            
         res.json(rentals);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -68,20 +159,23 @@ export const getRentals = async (req, res) => {
 export const getRentalById = async (req, res) => {
     try {
         const rental = await Rental.findById(req.params.id)
-            .populate('car', 'brand model year')
+            .populate('car')
+            .populate('carListing')
             .populate('renter', 'name email')
             .populate('owner', 'name email');
-
+            
         if (!rental) {
             return res.status(404).json({ message: 'Rental not found' });
         }
-
-        // Check if user is involved in the rental
-        if (rental.renter.toString() !== req.user._id.toString() && 
-            rental.owner.toString() !== req.user._id.toString()) {
-            return res.status(401).json({ message: 'Not authorized' });
+        
+        // Check if user is either the renter or owner
+        if (
+            rental.renter._id.toString() !== req.user._id.toString() &&
+            rental.owner._id.toString() !== req.user._id.toString()
+        ) {
+            return res.status(403).json({ message: 'Not authorized to view this rental' });
         }
-
+        
         res.json(rental);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -94,50 +188,150 @@ export const getRentalById = async (req, res) => {
 export const updateRentalStatus = async (req, res) => {
     try {
         const { status } = req.body;
-        const rental = await Rental.findById(req.params.id);
-
+        
+        if (!['pending', 'accepted', 'rejected', 'completed', 'cancelled'].includes(status)) {
+            return res.status(400).json({ message: 'Invalid status' });
+        }
+        
+        const rental = await Rental.findById(req.params.id)
+            .populate('car')
+            .populate('carListing')
+            .populate('renter', 'name email')
+            .populate('owner', 'name email');
+            
         if (!rental) {
             return res.status(404).json({ message: 'Rental not found' });
         }
-
-        // Check if user is the owner
-        if (rental.owner.toString() !== req.user._id.toString()) {
-            return res.status(401).json({ message: 'Not authorized' });
+        
+        // Check permissions based on the requested status change
+        if (status === 'accepted' || status === 'rejected') {
+            // Only the owner can accept or reject
+            if (rental.owner._id.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ message: 'Only the owner can accept or reject rentals' });
+            }
+        } else if (status === 'cancelled') {
+            // Only the renter can cancel
+            if (rental.renter._id.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ message: 'Only the renter can cancel rentals' });
+            }
+            
+            // Can only cancel if status is pending or accepted
+            if (!['pending', 'accepted'].includes(rental.status)) {
+                return res.status(400).json({ message: 'Cannot cancel a rental that is not pending or accepted' });
+            }
+        } else if (status === 'completed') {
+            // Only the owner can mark as completed
+            if (rental.owner._id.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ message: 'Only the owner can mark rentals as completed' });
+            }
+            
+            // Can only complete if status is accepted
+            if (rental.status !== 'accepted') {
+                return res.status(400).json({ message: 'Cannot complete a rental that is not accepted' });
+            }
         }
-
+        
+        // Update the status
         rental.status = status;
-        const updatedRental = await rental.save();
-
-        res.json(updatedRental);
+        await rental.save();
+        
+        // Send email notification
+        let emailSubject, emailText;
+        
+        if (status === 'accepted') {
+            emailSubject = 'Rental Request Accepted';
+            emailText = `Your rental request for ${rental.car.brand} ${rental.car.model} has been accepted.`;
+            await sendEmail({
+                to: rental.renter.email,
+                subject: emailSubject,
+                text: emailText
+            });
+        } else if (status === 'rejected') {
+            emailSubject = 'Rental Request Rejected';
+            emailText = `Your rental request for ${rental.car.brand} ${rental.car.model} has been rejected.`;
+            await sendEmail({
+                to: rental.renter.email,
+                subject: emailSubject,
+                text: emailText
+            });
+        } else if (status === 'cancelled') {
+            emailSubject = 'Rental Cancelled';
+            emailText = `The rental for ${rental.car.brand} ${rental.car.model} has been cancelled by the renter.`;
+            await sendEmail({
+                to: rental.owner.email,
+                subject: emailSubject,
+                text: emailText
+            });
+        } else if (status === 'completed') {
+            emailSubject = 'Rental Completed';
+            emailText = `Your rental of ${rental.car.brand} ${rental.car.model} has been marked as completed.`;
+            await sendEmail({
+                to: rental.renter.email,
+                subject: emailSubject,
+                text: emailText
+            });
+        }
+        
+        res.json(rental);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Submit rental review
+// @desc    Submit a review for a rental
 // @route   POST /api/rentals/:id/review
 // @access  Private
 export const submitReview = async (req, res) => {
     try {
-        const { rating, comment } = req.body;
+        const { text, rating } = req.body;
+        
+        if (!text || !rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ message: 'Please provide text and a rating between 1 and 5' });
+        }
+        
         const rental = await Rental.findById(req.params.id);
-
+        
         if (!rental) {
             return res.status(404).json({ message: 'Rental not found' });
         }
-
-        // Check if user is the renter
+        
+        // Only the renter can submit a review
         if (rental.renter.toString() !== req.user._id.toString()) {
-            return res.status(401).json({ message: 'Not authorized' });
+            return res.status(403).json({ message: 'Only the renter can submit a review' });
         }
-
+        
+        // Can only review completed rentals
+        if (rental.status !== 'completed') {
+            return res.status(400).json({ message: 'Can only review completed rentals' });
+        }
+        
+        // Check if a review already exists
+        if (rental.review && rental.review.text) {
+            return res.status(400).json({ message: 'Review already submitted' });
+        }
+        
+        // Add the review
         rental.review = {
+            text,
             rating,
-            comment
+            createdAt: Date.now()
         };
-
-        const updatedRental = await rental.save();
-        res.json(updatedRental);
+        
+        await rental.save();
+        
+        // Update the car's rating
+        const car = await Car.findById(rental.car);
+        
+        if (car) {
+            // Calculate new average rating
+            const totalRating = car.rating * car.totalReviews + rating;
+            car.totalReviews += 1;
+            car.rating = totalRating / car.totalReviews;
+            
+            await car.save();
+        }
+        
+        res.json(rental);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -1,11 +1,6 @@
 import mongoose from 'mongoose';
 
-const carSchema = new mongoose.Schema({
-    owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
+const carSchema = new mongoose.Schema({ 
     brand: {
         type: String,
         required: true
@@ -36,60 +31,17 @@ const carSchema = new mongoose.Schema({
     seats: {
         type: Number,
         required: true
-    },
-    pricePerDay: {
-        type: Number,
-        required: true
-    },
+    }, 
     images: [{
         url: String,
         publicId: String
-    }],
-    features: [{
-        type: String
-    }],
+    }], 
     description: {
         type: String,
         required: true
-    },
-    location: {
-        type: {
-            type: String,
-            enum: ['Point'],
-            default: 'Point'
-        },
-        coordinates: {
-            type: [Number],
-            required: true,
-            default: [0, 0]
-        }
-    },
-    radius: {
-        type: Number,
-        required: true,
-        default: 50 // Default 50 miles radius
-    },
-    isAvailable: {
-        type: Boolean,
-        default: true
-    },
-    rating: {
-        type: Number,
-        default: 0
-    },
-    totalReviews: {
-        type: Number,
-        default: 0
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
+    },    
 }, {
     timestamps: true
 });
 
-// Index for geospatial queries
-carSchema.index({ location: '2dsphere' });
-
-export default mongoose.model('Car', carSchema); 
+export default mongoose.model('Car', carSchema);  

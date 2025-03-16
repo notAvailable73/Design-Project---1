@@ -6,14 +6,17 @@ const locationSchema = new mongoose.Schema({
         ref: 'Car',
         required: true
     },
-    location: {
-        type: {
+    properties: {
+        district: {
             type: String,
-            enum: ['Point'],
-            default: 'Point'
+            required: true
         },
-        coordinates: {
-            type: [Number],
+        subDistrict: {
+            type: String,
+            required: true
+        },
+        address: {
+            type: String,
             required: true
         }
     },
@@ -23,7 +26,7 @@ const locationSchema = new mongoose.Schema({
     }
 });
 
-// Index for geospatial queries
-locationSchema.index({ location: '2dsphere' });
+// Index for location search
+locationSchema.index({ 'properties.district': 1, 'properties.subDistrict': 1 });
 
 export default mongoose.model('Location', locationSchema); 
