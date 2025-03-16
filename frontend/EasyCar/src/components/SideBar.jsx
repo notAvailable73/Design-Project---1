@@ -43,7 +43,7 @@ export default function Sidebar() {
           {/* My Rentings Button */}
           {/* All Cars Button */}
           <Link
-            to="/my-cars"
+            to="/add-car"
             className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition-colors duration-300"
           >
             <MdCarRental className="w-6 h-6" />

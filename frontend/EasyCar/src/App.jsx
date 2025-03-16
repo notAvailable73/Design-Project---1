@@ -15,6 +15,7 @@ import { ToastContainer } from "react-toastify"; // Import ToastContainer
 import "react-toastify/dist/ReactToastify.css"; // Import the CSS for toast notifications
 import ProtectedRoute from "./components/ProtectedRoute";
 import Sidebar from "./components/SideBar";
+import AddCar from "./pages/AddCar";
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
                 {" "}
                 {/* Protected Route */}
                 <Route path="/" element={<Home />} />
+                <Route path="/add-car" element={<AddCar />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
