@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node + Python Integration</title>
+</head>
+<body>
+  <h1>Run Python Task from Web</h1>
+  
+  <form id="pythonForm">
+    <label for="inputText">Enter input for Python:</label>
+    <input type="text" id="inputText" name="inputText" required>
+    <button type="submit">Run Python Task</button>
+  </form>
+  
+  <h2>Result:</h2>
+  <p id="result"></p>
+
+  <script>
+    document.getElementById('pythonForm').onsubmit = async function (e) {
+      e.preventDefault();
+      const userInput = document.getElementById('inputText').value;
+
+      try {
+        const response = await fetch('/run-python', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userInput })
+        });
+        const data = await response.json();
+        document.getElementById('result').textContent = data.result || data.error;
+      } catch (err) {
+        document.getElementById('result').textContent = 'Error connecting to server.';
+      }
+    };
+  </script>
+</body>
+</html>
