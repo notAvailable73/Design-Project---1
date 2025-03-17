@@ -28,7 +28,6 @@ export default function AddCar() {
     transmission: "",
     fuelType: "",
     seats: "",
-    pricePerDay: "",
     description: "",
     location: {
       type: "Point",
@@ -84,7 +83,6 @@ export default function AddCar() {
       formDataToSend.append("transmission", formData.transmission);
       formDataToSend.append("fuelType", formData.fuelType);
       formDataToSend.append("seats", formData.seats);
-      formDataToSend.append("pricePerDay", formData.pricePerDay);
       formDataToSend.append("description", formData.description);
       
       // Add any location data if present
@@ -309,22 +307,6 @@ export default function AddCar() {
             type="number"
             name="seats"
             value={formData.seats}
-            onChange={handleChange}
-            className="w-full p-2 bg-gray-700 rounded-lg"
-            required
-          />
-        </div>
-
-        {/* Price Per Day */}
-        <div className="space-y-2">
-          <label className="flex items-center space-x-2">
-            <FaMoneyBillWave className="w-6 h-6" />
-            <span>Price Per Day</span>
-          </label>
-          <input
-            type="number"
-            name="pricePerDay"
-            value={formData.pricePerDay}
             onChange={handleChange}
             className="w-full p-2 bg-gray-700 rounded-lg"
             required
