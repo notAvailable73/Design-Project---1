@@ -22,6 +22,7 @@ import ChatPage from "./pages/ChatPage";
 import ListCarForRent from "./pages/ListCarForRent";
 import MyListings from "./pages/MyListings";
 import CarListingDetails from "./pages/CarListingDetails";
+import MyCars from "./pages/MyCars";
 
 export default function App() {
   return (
@@ -57,6 +58,7 @@ export default function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/all-cars" element={<ViewAllCars />} />
                 <Route path="/add-car" element={<AddCar />} />
+                <Route path="/my-cars" element={<MyCars />} />
                 <Route path="/list-car" element={<ListCarForRent />} />
                 <Route path="/my-listings" element={<MyListings />} />
                 <Route path="/my-listings/:id" element={<CarListingDetails />} />

@@ -10,7 +10,8 @@ import {
   FaClock,
   FaCar,
   FaEdit,
-  FaArrowLeft
+  FaArrowLeft,
+  FaTrash
 } from "react-icons/fa";
 import axiosInstance from "../utils/axiosInstance";
 import { format } from "date-fns";
@@ -23,6 +24,7 @@ const CarListingDetails = () => {
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   
   // Fetch listing details on component mount
   useEffect(() => {
@@ -63,6 +65,22 @@ const CarListingDetails = () => {
       console.error("Error toggling listing status:", error);
       toast.error("Failed to update listing status");
       setToggling(false);
+    }
+  };
+  
+  // Delete car listing
+  const deleteListing = async () => {
+    try {
+      if (window.confirm("Are you sure you want to delete this listing? This action cannot be undone.")) {
+        setDeleting(true);
+        await axiosInstance.delete(`/api/car-listings/${id}`);
+        toast.success("Listing deleted successfully");
+        navigate("/my-listings");
+      }
+    } catch (error) {
+      console.error("Error deleting listing:", error);
+      toast.error(error.response?.data?.message || "Failed to delete listing");
+      setDeleting(false);
     }
   };
   
@@ -266,6 +284,7 @@ const CarListingDetails = () => {
             <FaEdit />
             <span>Edit Listing</span>
           </button>
+          
           <button
             onClick={toggleListingStatus}
             disabled={toggling}
@@ -286,6 +305,21 @@ const CarListingDetails = () => {
               <>
                 <FaToggleOn />
                 <span>Activate Listing</span>
+              </>
+            )}
+          </button>
+          
+          <button
+            onClick={deleteListing}
+            disabled={deleting}
+            className="flex items-center justify-center space-x-2 px-6 py-3 bg-red-700 hover:bg-red-800 rounded-lg font-semibold transition-colors"
+          >
+            {deleting ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+            ) : (
+              <>
+                <FaTrash />
+                <span>Delete Listing</span>
               </>
             )}
           </button>

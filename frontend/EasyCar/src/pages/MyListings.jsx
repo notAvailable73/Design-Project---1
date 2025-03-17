@@ -9,7 +9,8 @@ import {
   FaCalendarAlt, 
   FaMoneyBillWave,
   FaMapMarkerAlt,
-  FaCar
+  FaCar,
+  FaTrash
 } from "react-icons/fa";
 import axiosInstance from "../utils/axiosInstance";
 import { format } from "date-fns";
@@ -21,6 +22,7 @@ const MyListings = () => {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeToggles, setActiveToggles] = useState({});
+  const [deleting, setDeleting] = useState(null); // Track which listing is being deleted
   
   // Fetch listings on component mount
   useEffect(() => {
@@ -73,6 +75,30 @@ const MyListings = () => {
         ...prev,
         [listingId]: false
       }));
+    }
+  };
+
+  // Delete a car listing
+  const deleteListing = async (listingId) => {
+    try {
+      setDeleting(listingId);
+      await axiosInstance.delete(`/api/car-listings/${listingId}`);
+      
+      // Remove listing from state
+      setListings(prevListings => prevListings.filter(listing => listing._id !== listingId));
+      toast.success("Listing deleted successfully");
+    } catch (error) {
+      console.error("Error deleting listing:", error);
+      toast.error(error.response?.data?.message || "Failed to delete listing");
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  // Confirm deletion
+  const confirmDelete = (listingId) => {
+    if (window.confirm("Are you sure you want to delete this listing? This action cannot be undone.")) {
+      deleteListing(listingId);
     }
   };
   
@@ -169,7 +195,7 @@ const MyListings = () => {
                       </div>
                       
                       {/* Action Buttons */}
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <button
                           onClick={() => navigate(`/my-listings/${listing._id}`)}
                           className="flex items-center space-x-1 text-purple-400 hover:text-purple-300"
@@ -178,25 +204,44 @@ const MyListings = () => {
                           <span>Details</span>
                         </button>
                         
-                        <button
-                          onClick={() => toggleListingStatus(listing._id, listing.isActive)}
-                          disabled={activeToggles[listing._id]}
-                          className="flex items-center space-x-1 text-gray-400 hover:text-gray-300"
-                        >
-                          {activeToggles[listing._id] ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-purple-500"></div>
-                          ) : listing.isActive ? (
-                            <>
-                              <FaToggleOff />
-                              <span>Deactivate</span>
-                            </>
-                          ) : (
-                            <>
-                              <FaToggleOn />
-                              <span>Activate</span>
-                            </>
-                          )}
-                        </button>
+                        <div className="flex items-center space-x-3">
+                          <button
+                            onClick={() => toggleListingStatus(listing._id, listing.isActive)}
+                            disabled={activeToggles[listing._id]}
+                            className="flex items-center space-x-1 text-gray-400 hover:text-gray-300"
+                          >
+                            {activeToggles[listing._id] ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-purple-500"></div>
+                            ) : listing.isActive ? (
+                              <>
+                                <FaToggleOff />
+                                <span>Deactivate</span>
+                              </>
+                            ) : (
+                              <>
+                                <FaToggleOn />
+                                <span>Activate</span>
+                              </>
+                            )}
+                          </button>
+                          
+                          <button
+                            onClick={() => confirmDelete(listing._id)}
+                            disabled={deleting === listing._id}
+                            className={`flex items-center space-x-1 ${
+                              deleting === listing._id
+                                ? "text-gray-500 cursor-not-allowed"
+                                : "text-red-400 hover:text-red-300"
+                            }`}
+                          >
+                            {deleting === listing._id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-red-500"></div>
+                            ) : (
+                              <FaTrash />
+                            )}
+                            <span>{deleting === listing._id ? "Deleting..." : "Delete"}</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

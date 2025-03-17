@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import { FaCalendarAlt, FaMapMarkerAlt, FaMoneyBillWave, FaPlusCircle, FaCarSide } from "react-icons/fa";
+import { FaCalendarAlt, FaMapMarkerAlt, FaMoneyBillWave, FaPlusCircle, FaCarSide, FaExclamationCircle } from "react-icons/fa";
 import axiosInstance from "../utils/axiosInstance";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -58,12 +58,15 @@ const datePickerCustomStyles = `
 
 const ListCarForRent = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   
   // States
   const [userCars, setUserCars] = useState([]);
+  const [allUserCars, setAllUserCars] = useState([]); // To store all cars, including listed ones
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCar, setSelectedCar] = useState("");
+  const [listedCarIds, setListedCarIds] = useState([]); // Track which cars are already listed
   const [formData, setFormData] = useState({
     pricePerDay: "",
     radius: "5",
@@ -90,7 +93,12 @@ const ListCarForRent = () => {
   // Fetch user's cars on component mount
   useEffect(() => {
     fetchUserCars();
-  }, []);
+    
+    // Check if a car was pre-selected from navigation state
+    if (location.state?.selectedCar) {
+      setSelectedCar(location.state.selectedCar);
+    }
+  }, [location.state]);
 
   // Update sub-districts when district changes
   useEffect(() => {
@@ -106,23 +114,25 @@ const ListCarForRent = () => {
     }
   }, [formData.district]);
 
-  // Fetch user's cars that are not already listed
+  // Fetch user's cars including those already listed
   const fetchUserCars = async () => {
     try {
       setLoading(true);
-      // Get user cars
+      // Get all user cars
       const carsResponse = await axiosInstance.get("/api/cars/user/me");
+      setAllUserCars(carsResponse.data);
       
-      // Get car listings to filter out already listed cars
+      // Get car listings to identify which cars are already listed
       const listingsResponse = await axiosInstance.get("/api/car-listings/owner/listings");
       
       // Extract car IDs that are already listed
-      const listedCarIds = listingsResponse.data.map(listing => listing.car._id);
+      const listedIds = listingsResponse.data.map(listing => listing.car._id);
+      setListedCarIds(listedIds);
       
-      // Filter out cars that are already listed
-      const availableCars = carsResponse.data.filter(car => !listedCarIds.includes(car._id));
-      
+      // Filter out cars that are already listed for the available selection
+      const availableCars = carsResponse.data.filter(car => !listedIds.includes(car._id));
       setUserCars(availableCars);
+      
       setLoading(false);
     } catch (error) {
       console.error("Error fetching cars:", error);
@@ -150,12 +160,15 @@ const ListCarForRent = () => {
 
   // Handle car selection
   const handleCarSelect = (carId) => {
-    setSelectedCar(carId);
-    setShowDropdown(false);
+    // Only allow selecting cars that aren't already listed
+    if (!listedCarIds.includes(carId)) {
+      setSelectedCar(carId);
+      setShowDropdown(false);
+    }
   };
 
-  // Find selected car details
-  const selectedCarDetails = userCars.find(car => car._id === selectedCar);
+  // Find selected car details from all cars
+  const selectedCarDetails = allUserCars.find(car => car._id === selectedCar);
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -222,7 +235,7 @@ const ListCarForRent = () => {
         </div>
       ) : (
         <>
-          {userCars.length === 0 ? (
+          {allUserCars.length === 0 ? (
             <div className="text-center p-8 bg-gray-800 rounded-lg">
               <FaCarSide className="mx-auto text-5xl text-purple-500 mb-4" />
               <h2 className="text-2xl font-semibold mb-4">You don't have any cars to list</h2>
@@ -233,6 +246,26 @@ const ListCarForRent = () => {
               >
                 Add a New Car
               </button>
+            </div>
+          ) : userCars.length === 0 ? (
+            <div className="text-center p-8 bg-gray-800 rounded-lg">
+              <FaExclamationCircle className="mx-auto text-5xl text-yellow-500 mb-4" />
+              <h2 className="text-2xl font-semibold mb-4">All your cars are already listed</h2>
+              <p className="mb-6">You've listed all your cars for rent. Add more cars or manage your existing listings.</p>
+              <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <button 
+                  onClick={() => navigate("/add-car")}
+                  className="px-6 py-3 bg-purple-600 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                >
+                  Add a New Car
+                </button>
+                <button 
+                  onClick={() => navigate("/my-listings")}
+                  className="px-6 py-3 bg-blue-600 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Manage Listings
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
@@ -266,6 +299,8 @@ const ListCarForRent = () => {
                   
                   {showDropdown && (
                     <div className="absolute z-20 w-full mt-1 bg-gray-900 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      {/* Available cars (not listed) */}
+                      <div className="p-2 text-xs text-gray-400 uppercase font-semibold">Available Cars</div>
                       {userCars.map((car) => (
                         <div
                           key={car._id}
@@ -282,6 +317,38 @@ const ListCarForRent = () => {
                           <span>{`${car.brand} ${car.model} (${car.year})`}</span>
                         </div>
                       ))}
+                      
+                      {/* Already listed cars (disabled) */}
+                      {listedCarIds.length > 0 && (
+                        <>
+                          <div className="p-2 text-xs text-gray-400 uppercase font-semibold border-t border-gray-700 mt-1">Already Listed</div>
+                          {allUserCars
+                            .filter(car => listedCarIds.includes(car._id))
+                            .map((car) => (
+                              <div
+                                key={car._id}
+                                className="p-3 bg-gray-800 cursor-not-allowed flex items-center space-x-3 opacity-60"
+                              >
+                                {car.images?.[0]?.url && (
+                                  <img 
+                                    src={car.images[0].url} 
+                                    alt={car.brand} 
+                                    className="w-12 h-12 object-cover rounded"
+                                  />
+                                )}
+                                <div className="flex-1">
+                                  <span>{`${car.brand} ${car.model} (${car.year})`}</span>
+                                  <div className="text-yellow-500 text-sm flex items-center mt-1">
+                                    <FaExclamationCircle className="mr-1" />
+                                    <span>Already listed for rent</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                        </>
+                      )}
+                      
+                      {/* Add new car option */}
                       <div 
                         className="p-3 hover:bg-purple-700 cursor-pointer flex items-center space-x-3 bg-purple-800 text-white"
                         onClick={() => navigate("/add-car")}
