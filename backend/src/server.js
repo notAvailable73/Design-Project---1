@@ -20,6 +20,9 @@ const httpServer = http.createServer(app);
 // Configure Socket.IO
 const io = configureSocket(httpServer);
 
+// Attach Socket.IO to the app
+app.set("io", io);
+
 // Connect to MongoDB
 connectDB();
 
