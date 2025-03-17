@@ -40,6 +40,8 @@ export default function AddCar() {
 
   // State for image upload
   const [imageFiles, setImageFiles] = useState([]);
+  // Add loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -66,6 +68,9 @@ export default function AddCar() {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Set submitting state to true
+    setIsSubmitting(true);
 
     try {
       // Create a FormData object to send both text data and files
@@ -148,6 +153,9 @@ export default function AddCar() {
         pauseOnHover: true,
         draggable: true,
       });
+      
+      // Reset submitting state in case of error
+      setIsSubmitting(false);
     }
   };
 
@@ -342,9 +350,14 @@ export default function AddCar() {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full bg-purple-600 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors duration-300"
+          className={`w-full py-3 rounded-lg font-semibold transition-colors duration-300 ${
+            isSubmitting 
+              ? "bg-purple-500 cursor-not-allowed" 
+              : "bg-purple-600 hover:bg-purple-700"
+          }`}
+          disabled={isSubmitting}
         >
-          Add Car
+          {isSubmitting ? "Adding your car..." : "Add Car"}
         </button>
       </form>
     </div>
