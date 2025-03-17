@@ -15,7 +15,19 @@ const carListingSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    availability: {
+    radius: {
+        type: Number,
+        required: true
+    },
+    availableFrom: {
+        type: Date,
+        required: true
+    },
+    availableTo: {
+        type: Date,
+        required: true
+    },
+    isActive: {
         type: Boolean,
         default: true
     },
@@ -33,9 +45,8 @@ const carListingSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Create index for location search
-carListingSchema.index({ 'location': 1 });
+// No indexes defined here - we'll create them manually in the script
 
+// Export the model
 const CarListing = mongoose.model('CarListing', carListingSchema);
-
 export default CarListing; 

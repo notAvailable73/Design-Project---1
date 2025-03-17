@@ -83,8 +83,8 @@ const rentalSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Create index for location search
-rentalSchema.index({ 'pickupLocation.properties.district': 1, 'pickupLocation.properties.subDistrict': 1 });
-rentalSchema.index({ 'returnLocation.properties.district': 1, 'returnLocation.properties.subDistrict': 1 });
+// No indexes defined here - we'll create them manually in the script
 
-export default mongoose.model('Rental', rentalSchema); 
+// Export the model
+const Rental = mongoose.model('Rental', rentalSchema);
+export default Rental; 

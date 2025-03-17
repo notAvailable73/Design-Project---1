@@ -46,6 +46,23 @@ export const createCarListing = async (req, res) => {
       return res.status(400).json({ message: 'Price is required' });
     }
     
+    // Validate radius
+    if (!req.body.radius) {
+      return res.status(400).json({ message: 'Radius is required' });
+    }
+    
+    // Validate dates
+    if (!req.body.availableFrom || !req.body.availableTo) {
+      return res.status(400).json({ message: 'Availability dates are required' });
+    }
+    
+    const availableFrom = new Date(req.body.availableFrom);
+    const availableTo = new Date(req.body.availableTo);
+    
+    if (availableFrom >= availableTo) {
+      return res.status(400).json({ message: 'End date must be after start date' });
+    }
+    
     // Create a location document first
     const location = new Location({
       car: req.body.car,
@@ -64,7 +81,10 @@ export const createCarListing = async (req, res) => {
       car: req.body.car,
       owner: req.user._id,
       pricePerDay: req.body.pricePerDay,
-      availability: req.body.availability,
+      radius: req.body.radius,
+      availableFrom: availableFrom,
+      availableTo: availableTo,
+      isActive: req.body.isActive !== undefined ? req.body.isActive : true,
       location: location._id // Set the location reference
     };
     

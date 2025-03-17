@@ -92,7 +92,7 @@ export const createRental = async (req, res) => {
         
         // Calculate total price
         const days = Math.ceil((endDateObj - startDateObj) / (1000 * 60 * 60 * 24));
-        const totalPrice = days * carListing.price;
+        const totalPrice = days * parseInt(carListing.pricePerDay);
         
         // Create the rental
         const rental = new Rental({

@@ -26,7 +26,8 @@ const locationSchema = new mongoose.Schema({
     }
 });
 
-// Index for location search
-locationSchema.index({ 'properties.district': 1, 'properties.subDistrict': 1 });
+// No indexes defined here - we'll create them manually in the script
 
-export default mongoose.model('Location', locationSchema); 
+// Export the model
+const Location = mongoose.model('Location', locationSchema);
+export default Location; 
