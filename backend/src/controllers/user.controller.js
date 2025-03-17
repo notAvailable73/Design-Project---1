@@ -23,7 +23,7 @@ const generateOTP = () => {
 // @access  Public
 export const registerUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { name, email, password } = req.body;
     if (!email || !password) {
       return res
         .status(400)
@@ -54,6 +54,7 @@ export const registerUser = async (req, res) => {
       otpRecord.otp = otp;
       otpRecord.isVerified = false;
       otpRecord.userData = { 
+        name,
         email,
         password: hashedPassword,
       };
@@ -64,6 +65,7 @@ export const registerUser = async (req, res) => {
         email,
         otp,
         userData: {
+          name,
           email,
           password: hashedPassword,
         },
