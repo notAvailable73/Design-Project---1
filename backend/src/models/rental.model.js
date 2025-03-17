@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 
 const rentalSchema = new mongoose.Schema({
+    carListing: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CarListing',
+        required: true
+    },
     car: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Car',
@@ -24,7 +29,7 @@ const rentalSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
-    proposedPrice: {
+    totalPrice: {
         type: Number,
         required: true
     },
@@ -32,6 +37,38 @@ const rentalSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'accepted', 'rejected', 'completed', 'cancelled'],
         default: 'pending'
+    },
+    pickupLocation: {
+        properties: {
+            district: {
+                type: String,
+                required: true
+            },
+            subDistrict: {
+                type: String,
+                required: true
+            },
+            address: {
+                type: String,
+                required: true
+            }
+        }
+    },
+    returnLocation: {
+        properties: {
+            district: {
+                type: String,
+                required: true
+            },
+            subDistrict: {
+                type: String,
+                required: true
+            },
+            address: {
+                type: String,
+                required: true
+            }
+        }
     },
     review: {
         text: String,
@@ -42,6 +79,12 @@ const rentalSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     }
+}, {
+    timestamps: true
 });
 
-export default mongoose.model('Rental', rentalSchema); 
+// No indexes defined here - we'll create them manually in the script
+
+// Export the model
+const Rental = mongoose.model('Rental', rentalSchema);
+export default Rental; 

@@ -15,6 +15,8 @@ import carRoutes from "../routes/car.route.js";
 import rentalRoutes from "../routes/rental.route.js";
 import chatRoutes from "../routes/chat.route.js";
 import locationRoutes from "../routes/location.route.js";
+import carListingRoutes from "../routes/carListing.route.js";
+
 const configureExpress = () => {
   const app = express();
 
@@ -43,6 +45,7 @@ const configureExpress = () => {
   app.use("/api/rentals", rentalRoutes);
   app.use("/api/chats", chatRoutes);
   app.use("/api/locations", locationRoutes);
+  app.use("/api/car-listings", carListingRoutes);
 
   // Error handling middleware
   app.use((err, req, res, next) => {
