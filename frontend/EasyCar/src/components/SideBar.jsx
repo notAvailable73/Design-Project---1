@@ -43,13 +43,13 @@ export default function Sidebar() {
     userProfile && (
       <div className="w-64 bg-gray-800 text-white shadow-lg min-h-min">
         <div className="flex flex-col p-4 space-y-4">
-          {/* Browse Cars */}
+          {/* Rent a Car */}
           <Link
-            to="/all-cars"
+            to="/rent-car"
             className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition-colors duration-300"
           >
             <MdCarRental className="w-6 h-6" />
-            <span>Browse Cars</span>
+            <span>Rent a Car</span>
           </Link>
           
           {/* My Cars Section */}

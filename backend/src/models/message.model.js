@@ -17,6 +17,14 @@ const messageSchema = new mongoose.Schema(
       ref: "Chat",
       required: true,
     },
+    rentalRequest: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Rental",
+    },
+    isSystemMessage: {
+      type: Boolean,
+      default: false
+    }
   },
   { timestamps: true }
 );
