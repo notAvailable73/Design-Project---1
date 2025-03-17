@@ -13,7 +13,6 @@ import axiosInstance from "../utils/axiosInstance";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -43,28 +42,18 @@ export default function SignUp() {
     try {
       setLoading(true); // Start loading
       setError(""); // Clear any previous errors
+
       // Send POST request to the backend
       const response = await axiosInstance.post("/api/users/register", {
-        name: formData.name,
         email: formData.email,
         password: formData.password,
       });
 
-      // Handle successful registration
-      if (response.data) {
-        console.log("Registration successful:", response.data);
-      }
-      toast.success("User Created Successfully!", {
-        position: "top-right",
-        autoClose: 3000, // Close the toast after 3 seconds
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-
-      // Redirect to the login page after a delay
-      navigate("/login");
+      // Store the email in localStorage or state management
+      localStorage.setItem("email", formData.email); // Save email for OTP verification
+      toast.success("OTP sent successfully!");
+      // Navigate to the Verify OTP page
+      navigate("/verify-otp", { state: { email: formData.email } }); // Pass email as state
     } catch (err) {
       // Handle errors
       if (err.response && err.response.data.message) {
@@ -90,20 +79,6 @@ export default function SignUp() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Name Field */}
-          <div className="relative">
-            <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              name="name"
-              placeholder="Name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              required
-            />
-          </div>
-
           {/* Email Field */}
           <div className="relative">
             <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
