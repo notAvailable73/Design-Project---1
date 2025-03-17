@@ -3,9 +3,7 @@ import axios from "axios";
 const axiosInstance = axios.create({
   baseURL: "http://localhost:8000",
   timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // Don't set a default Content-Type so that it can be set automatically for multipart/form-data
 });
 
 // Add a request interceptor
@@ -17,6 +15,9 @@ axiosInstance.interceptors.request.use(
       // Add Authorization header
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
+    
+    // Allow Content-Type to be set automatically for multipart/form-data
+    // This will ensure the browser sets the correct boundary parameter
     return config; // Proceed with the modified config
   },
   (error) => {

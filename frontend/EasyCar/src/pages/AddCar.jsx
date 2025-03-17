@@ -68,36 +68,59 @@ export default function AddCar() {
     e.preventDefault();
 
     try {
-      //   Upload images to a cloud service (e.g., Cloudinary) and get URLs
-      //   const uploadedImages = await Promise.all(
-      //     imageFiles.map(async (file) => {
-      //       const formData = new FormData();
-      //       formData.append("file", file);
-      //       formData.append("upload_preset", "EasyCar");
-      //       formData.append("cloud_name", "ddl67pps0");
-      //       // Replace with your Cloudinary upload preset
-
-      //       const response = await axiosInstance.post(
-      //         "https://api.cloudinary.com/v1_1/ddl67pps0/image/upload", // Replace with your Cloudinary cloud name
-      //         formData
-      //       );
-      //       return {
-      //         url: response.data.secure_url,
-      //         publicId: response.data.public_id,
-      //       };
-      //     })
-      //   );
-      //   // Add the car to the database
-
-      const uploadedImages = [];
+      // Create a FormData object to send both text data and files
+      const formDataToSend = new FormData();
+      
+      // Add all text fields to FormData
+      formDataToSend.append("brand", formData.brand);
+      formDataToSend.append("model", formData.model);
+      formDataToSend.append("year", formData.year);
+      formDataToSend.append("type", formData.type);
+      formDataToSend.append("transmission", formData.transmission);
+      formDataToSend.append("fuelType", formData.fuelType);
+      formDataToSend.append("seats", formData.seats);
+      formDataToSend.append("pricePerDay", formData.pricePerDay);
+      formDataToSend.append("description", formData.description);
+      
+      // Add any location data if present
+      if (formData.location && formData.location.coordinates) {
+        if (formData.location.coordinates[0] !== 0 || formData.location.coordinates[1] !== 0) {
+          formDataToSend.append("location[type]", "Point");
+          formDataToSend.append("location[coordinates][0]", formData.location.coordinates[0]);
+          formDataToSend.append("location[coordinates][1]", formData.location.coordinates[1]);
+        }
+      }
+      
+      formDataToSend.append("radius", formData.radius);
+      
+      // Add all image files
+      if (imageFiles.length > 0) {
+        console.log(`Uploading ${imageFiles.length} images`);
+        imageFiles.forEach((file, index) => {
+          console.log(`Adding image ${index + 1}: ${file.name}`);
+          formDataToSend.append("images", file);
+        });
+      } else {
+        console.log("No images to upload");
+        toast.warning("Please add at least one image of your car");
+        return;
+      }
+      
+      console.log("Submitting form data to server...");
+      
+      // Make API request with proper configuration for FormData
       const response = await axiosInstance.post(
-        "http://localhost:8000/api/cars",
+        "/api/cars",
+        formDataToSend,
         {
-          ...formData,
-          images: uploadedImages,
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
         }
       );
-      console.log(response);
+      
+      console.log("Server response:", response.data);
+      
       // Show success toast
       toast.success("Car added successfully!", {
         position: "top-right",
@@ -109,12 +132,17 @@ export default function AddCar() {
       });
 
       // Redirect to the dashboard or home page
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       console.error("Failed to add car:", err);
-      toast.error("Failed to add car. Please try again.", {
+      
+      // More detailed error message
+      const errorMessage = err.response?.data?.message || err.message || "Failed to add car. Please try again.";
+      console.error("Error details:", errorMessage);
+      
+      toast.error(errorMessage, {
         position: "top-right",
-        autoClose: 3000,
+        autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
