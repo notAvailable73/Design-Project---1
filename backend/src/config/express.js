@@ -19,7 +19,15 @@ const configureExpress = () => {
   const app = express();
 
   // Middleware
-  app.use(cors({ origin: "*" }));
+
+  const corsOptions = {
+    origin: "http://localhost:5173", // Allow this origin
+    methods: ["GET", "POST", "PUT", "DELETE"], // Add allowed methods
+    credentials: true, // Allow credentials (if needed)
+  };
+
+  app.use(cors(corsOptions));
+
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(morgan("dev"));

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { IoChatboxEllipses } from "react-icons/io5";
 import {
   FaCar,
   FaHistory,
@@ -43,12 +44,20 @@ export default function Sidebar() {
           {/* My Rentings Button */}
           {/* All Cars Button */}
           <Link
-            to="/add-car"
+            to="/all-cars"
             className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition-colors duration-300"
           >
             <MdCarRental className="w-6 h-6" />
             <span>All Cars</span>
           </Link>
+          <Link
+            to="/add-car"
+            className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition-colors duration-300"
+          >
+            <MdCarRental className="w-6 h-6" />
+            <span>Add Car</span>
+          </Link>
+
           <Link
             to="/my-rentings"
             className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition-colors duration-300"
@@ -64,6 +73,13 @@ export default function Sidebar() {
           >
             <FaCar className="w-6 h-6" />
             <span>My Cars</span>
+          </Link>
+          <Link
+            to="/chats"
+            className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition-colors duration-300"
+          >
+            <IoChatboxEllipses className="w-6 h-6" />
+            <span>My Chats</span>
           </Link>
 
           {/* My Profile Button */}

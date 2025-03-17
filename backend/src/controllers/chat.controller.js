@@ -80,6 +80,8 @@ export const createChat = async (req, res) => {
 export const sendMessage = async (req, res) => {
   try {
     const { content } = req.body;
+    console.log("object");
+    console.log(content);
     const chat = await Chat.findById(req.params.id);
 
     if (!chat) {
@@ -96,22 +98,37 @@ export const sendMessage = async (req, res) => {
       content,
       chat: chat._id,
     });
+    console.log(message);
 
     // Update the chat's latest message
     await Chat.findByIdAndUpdate(chat._id, {
       latestMessage: message._id,
     });
 
-    // Populate the sender details
     await message.populate("sender", "name email");
-
-    // Emit the new message to all participants in the chat
-    req.app.get("io").to(chat._id.toString()).emit("new_message", {
-      chatId: chat._id,
-      message: message,
-    });
-
     res.status(201).json(message);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const getChatMessages = async (req, res) => {
+  try {
+    const chat = await Chat.findById(req.params.id);
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    // Check if user is a participant
+    if (!chat.users.some((p) => p.toString() === req.user._id.toString())) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+    // Fetch all messages for the chat
+    const messages = await Message.find({ chat: chat._id })
+      .populate("sender", "name email")
+      .sort({ createdAt: 1 }); // Sort by creation time (oldest first)
+
+    res.json(messages);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
