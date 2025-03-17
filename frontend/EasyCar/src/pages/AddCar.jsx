@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -15,9 +15,19 @@ import {
   FaInfoCircle,
 } from "react-icons/fa";
 import axiosInstance from "../utils/axiosInstance";
+import { useVerificationCheck } from "../components/VerificationCheck";
 
 export default function AddCar() {
   const navigate = useNavigate();
+  const { isVerified, loading: verificationLoading, requireVerification, VerificationModal } = useVerificationCheck();
+
+  // Check verification when component mounts
+  useEffect(() => {
+    // If verification check is complete and user is not verified, show verification modal
+    if (!verificationLoading && !isVerified) {
+      requireVerification('add a car');
+    }
+  }, [isVerified, verificationLoading]);
 
   // State for form data
   const [formData, setFormData] = useState({
@@ -68,6 +78,11 @@ export default function AddCar() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // First check if user is verified
+    if (!requireVerification('add a car')) {
+      return;
+    }
+    
     // Set submitting state to true
     setIsSubmitting(true);
 
@@ -106,6 +121,7 @@ export default function AddCar() {
       } else {
         console.log("No images to upload");
         toast.warning("Please add at least one image of your car");
+        setIsSubmitting(false);
         return;
       }
       
@@ -156,6 +172,14 @@ export default function AddCar() {
       setIsSubmitting(false);
     }
   };
+
+  if (verificationLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black to-indigo-950 text-white p-8 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black to-indigo-950 text-white p-8">
@@ -342,6 +366,9 @@ export default function AddCar() {
           {isSubmitting ? "Adding your car..." : "Add Car"}
         </button>
       </form>
+      
+      {/* Verification Modal */}
+      <VerificationModal />
     </div>
   );
 }

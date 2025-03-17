@@ -46,7 +46,7 @@ export const createCar = async (req, res) => {
     console.error("Error creating car:", error);
     res.status(500).json({ message: error.message });
   }
-}; 
+};  
 
 // @desc    Get all cars
 // @route   GET /api/cars

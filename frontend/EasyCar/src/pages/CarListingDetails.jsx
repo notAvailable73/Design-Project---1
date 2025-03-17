@@ -26,6 +26,7 @@ import axiosInstance from "../utils/axiosInstance";
 import { format } from "date-fns";
 import LocationSelector from "../components/LocationSelector";
 import DateRangePicker from "../components/DateRangePicker";
+import { useVerificationCheck } from "../components/VerificationCheck";
 
 const CarListingDetails = () => {
   const { id } = useParams();
@@ -62,6 +63,9 @@ const CarListingDetails = () => {
   
   // State for booking submission
   const [submitting, setSubmitting] = useState(false);
+  
+  // Add verification check
+  const { isVerified, loading: verificationLoading, requireVerification, VerificationModal } = useVerificationCheck();
   
   // State for availability check
   const [checking, setChecking] = useState(false);
@@ -249,6 +253,11 @@ const CarListingDetails = () => {
   // Handle booking form submission
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if user is verified
+    if (!requireVerification('book this car')) {
+      return;
+    }
     
     // Validate pickup location
     const { district: pickupDistrict, subDistrict: pickupSubDistrict, address: pickupAddress } = bookingFormData.pickupLocation;
@@ -439,7 +448,12 @@ const CarListingDetails = () => {
             {/* Action Buttons */}
             <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
               <button
-                onClick={() => setShowBookingForm(!showBookingForm)}
+                onClick={() => {
+                  if (!showBookingForm && !requireVerification('request a booking')) {
+                    return;
+                  }
+                  setShowBookingForm(!showBookingForm);
+                }}
                 className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
               >
                 <FaCalendarAlt className="mr-2" />
@@ -448,8 +462,11 @@ const CarListingDetails = () => {
               
               <button
                 onClick={() => {
-                  // Create a new chat with the owner or navigate to existing chat
-                  navigate(`/chats`, { state: { userId: listing.owner?._id, carId: listing.car?._id } });
+                  // Check if user is verified before allowing to message
+                  if (requireVerification('message the owner')) {
+                    // Create a new chat with the owner or navigate to existing chat
+                    navigate(`/chats`, { state: { userId: listing.owner?._id, carId: listing.car?._id } });
+                  }
                 }}
                 className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
               >
@@ -631,6 +648,8 @@ const CarListingDetails = () => {
           </div>
         )}
       </div>
+      {/* Verification Modal */}
+      <VerificationModal />
     </div>
   );
 };

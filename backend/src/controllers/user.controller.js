@@ -268,10 +268,7 @@ export const updateUserProfile = async (req, res) => {
 // @route   POST /api/users/verify
 // @access  Private
 export const submitVerification = async (req, res) => {
-  try {
-    const { nidNumber } = req.body;
-    console.log("Request body:", req.body);
-    console.log("Request file:", req.file);
+  try { 
 
     // Check if image was uploaded
     if (!req.file) {
@@ -297,27 +294,24 @@ export const submitVerification = async (req, res) => {
         console.error(`Error deleting old NID image ${user.nidImagePublicId}:`, error);
       }
     }
-
-    // Save NID information
-    user.nidNumber = nidNumber;
+ 
     user.nidImage = req.file.path; // Cloudinary URL
     user.nidImagePublicId = req.file.filename; // Cloudinary public ID
     user.isVerified = true;
 
-    console.log("Saving user with NID image:", {
-      nidNumber: user.nidNumber,
+    console.log("Saving user with NID image:", { 
       nidImage: user.nidImage,
       nidImagePublicId: user.nidImagePublicId
     });
-
     // Try to extract data from NID image if possible
     try {
       const nidData = await extractNidData(req.file.path, true);
       console.log("Extracted NID data:", nidData);
-
+      
       if (!nidData.error) {
+        user.nidNumber = req.body.nidNumber;
         // Store additional extracted data
-        user.extractedNidData = {
+        user.extractedNidData = { 
           englishName: nidData.englishName || "",
           banglaName: nidData.banglaName || "",
           fatherName: nidData.fatherName || "",

@@ -6,6 +6,7 @@ import axiosInstance from "../utils/axiosInstance";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import LocationSelector from "../components/LocationSelector";
+import { useVerificationCheck } from "../components/VerificationCheck";
 
 // Bangladesh district data
 const districtData = {
@@ -61,6 +62,9 @@ const ListCarForRent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  // Add verification check
+  const { isVerified, loading: verificationLoading, requireVerification, VerificationModal } = useVerificationCheck();
+  
   // States
   const [userCars, setUserCars] = useState([]);
   const [allUserCars, setAllUserCars] = useState([]); // To store all cars, including listed ones
@@ -101,6 +105,14 @@ const ListCarForRent = () => {
       document.head.removeChild(styleElement);
     };
   }, []);
+  
+  // Check verification when component mounts
+  useEffect(() => {
+    // If verification check is complete and user is not verified, show verification modal
+    if (!verificationLoading && !isVerified) {
+      requireVerification('list a car for rent');
+    }
+  }, [isVerified, verificationLoading]);
   
   // Fetch user's cars including those already listed
   const fetchUserCars = async () => {
@@ -181,6 +193,11 @@ const ListCarForRent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // First check if user is verified
+    if (!requireVerification('list a car for rent')) {
+      return;
+    }
+    
     if (!selectedCar) {
       toast.error("Please select a car to list for rent");
       return;
@@ -231,6 +248,14 @@ const ListCarForRent = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (verificationLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black to-indigo-950 text-white p-8 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black to-indigo-950 text-white p-8">
@@ -484,6 +509,8 @@ const ListCarForRent = () => {
           </form>
         )}
       </div>
+      {/* Verification Modal */}
+      <VerificationModal />
     </div>
   );
 };
