@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -15,9 +15,19 @@ import {
   FaInfoCircle,
 } from "react-icons/fa";
 import axiosInstance from "../utils/axiosInstance";
+import { useVerificationCheck } from "../components/VerificationCheck";
 
 export default function AddCar() {
   const navigate = useNavigate();
+  const { isVerified, loading: verificationLoading, requireVerification, VerificationModal } = useVerificationCheck();
+
+  // Check verification when component mounts
+  useEffect(() => {
+    // If verification check is complete and user is not verified, show verification modal
+    if (!verificationLoading && !isVerified) {
+      requireVerification('add a car');
+    }
+  }, [isVerified, verificationLoading]);
 
   // State for form data
   const [formData, setFormData] = useState({
@@ -28,7 +38,6 @@ export default function AddCar() {
     transmission: "",
     fuelType: "",
     seats: "",
-    pricePerDay: "",
     description: "",
     location: {
       type: "Point",
@@ -40,6 +49,8 @@ export default function AddCar() {
 
   // State for image upload
   const [imageFiles, setImageFiles] = useState([]);
+  // Add loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -66,38 +77,69 @@ export default function AddCar() {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // First check if user is verified
+    if (!requireVerification('add a car')) {
+      return;
+    }
+    
+    // Set submitting state to true
+    setIsSubmitting(true);
 
     try {
-      //   Upload images to a cloud service (e.g., Cloudinary) and get URLs
-      //   const uploadedImages = await Promise.all(
-      //     imageFiles.map(async (file) => {
-      //       const formData = new FormData();
-      //       formData.append("file", file);
-      //       formData.append("upload_preset", "EasyCar");
-      //       formData.append("cloud_name", "ddl67pps0");
-      //       // Replace with your Cloudinary upload preset
-
-      //       const response = await axiosInstance.post(
-      //         "https://api.cloudinary.com/v1_1/ddl67pps0/image/upload", // Replace with your Cloudinary cloud name
-      //         formData
-      //       );
-      //       return {
-      //         url: response.data.secure_url,
-      //         publicId: response.data.public_id,
-      //       };
-      //     })
-      //   );
-      //   // Add the car to the database
-
-      const uploadedImages = [];
+      // Create a FormData object to send both text data and files
+      const formDataToSend = new FormData();
+      
+      // Add all text fields to FormData
+      formDataToSend.append("brand", formData.brand);
+      formDataToSend.append("model", formData.model);
+      formDataToSend.append("year", formData.year);
+      formDataToSend.append("type", formData.type);
+      formDataToSend.append("transmission", formData.transmission);
+      formDataToSend.append("fuelType", formData.fuelType);
+      formDataToSend.append("seats", formData.seats);
+      formDataToSend.append("description", formData.description);
+      
+      // Add any location data if present
+      if (formData.location && formData.location.coordinates) {
+        if (formData.location.coordinates[0] !== 0 || formData.location.coordinates[1] !== 0) {
+          formDataToSend.append("location[type]", "Point");
+          formDataToSend.append("location[coordinates][0]", formData.location.coordinates[0]);
+          formDataToSend.append("location[coordinates][1]", formData.location.coordinates[1]);
+        }
+      }
+      
+      formDataToSend.append("radius", formData.radius);
+      
+      // Add all image files
+      if (imageFiles.length > 0) {
+        console.log(`Uploading ${imageFiles.length} images`);
+        imageFiles.forEach((file, index) => {
+          console.log(`Adding image ${index + 1}: ${file.name}`);
+          formDataToSend.append("images", file);
+        });
+      } else {
+        console.log("No images to upload");
+        toast.warning("Please add at least one image of your car");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      console.log("Submitting form data to server...");
+      
+      // Make API request with proper configuration for FormData
       const response = await axiosInstance.post(
-        "http://localhost:8000/api/cars",
+        "/api/cars",
+        formDataToSend,
         {
-          ...formData,
-          images: uploadedImages,
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
         }
       );
-      console.log(response);
+      
+      console.log("Server response:", response.data);
+      
       // Show success toast
       toast.success("Car added successfully!", {
         position: "top-right",
@@ -109,19 +151,35 @@ export default function AddCar() {
       });
 
       // Redirect to the dashboard or home page
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       console.error("Failed to add car:", err);
-      toast.error("Failed to add car. Please try again.", {
+      
+      // More detailed error message
+      const errorMessage = err.response?.data?.message || err.message || "Failed to add car. Please try again.";
+      console.error("Error details:", errorMessage);
+      
+      toast.error(errorMessage, {
         position: "top-right",
-        autoClose: 3000,
+        autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
       });
+      
+      // Reset submitting state in case of error
+      setIsSubmitting(false);
     }
   };
+
+  if (verificationLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black to-indigo-950 text-white p-8 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black to-indigo-950 text-white p-8">
@@ -279,22 +337,6 @@ export default function AddCar() {
           />
         </div>
 
-        {/* Price Per Day */}
-        <div className="space-y-2">
-          <label className="flex items-center space-x-2">
-            <FaMoneyBillWave className="w-6 h-6" />
-            <span>Price Per Day</span>
-          </label>
-          <input
-            type="number"
-            name="pricePerDay"
-            value={formData.pricePerDay}
-            onChange={handleChange}
-            className="w-full p-2 bg-gray-700 rounded-lg"
-            required
-          />
-        </div>
-
         {/* Description */}
         <div className="space-y-2">
           <label className="flex items-center space-x-2">
@@ -314,11 +356,19 @@ export default function AddCar() {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full bg-purple-600 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors duration-300"
+          className={`w-full py-3 rounded-lg font-semibold transition-colors duration-300 ${
+            isSubmitting 
+              ? "bg-purple-500 cursor-not-allowed" 
+              : "bg-purple-600 hover:bg-purple-700"
+          }`}
+          disabled={isSubmitting}
         >
-          Add Car
+          {isSubmitting ? "Adding your car..." : "Add Car"}
         </button>
       </form>
+      
+      {/* Verification Modal */}
+      <VerificationModal />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import User from '../models/user.model.js';
 import { isValidDistrict, isValidSubDistrict } from '../utils/locations.js';
 import Location from '../models/location.model.js';
 import mongoose from 'mongoose';
+import Rental from '../models/rental.model.js';
 
 // @desc    Create a new car listing
 // @route   POST /api/car-listings
@@ -101,17 +102,47 @@ export const createCarListing = async (req, res) => {
 // @access  Public
 export const getCarListings = async (req, res) => {
   try {
-    const { district, subDistrict, startDate, endDate } = req.query;
+    const { district, subDistrict, startDate, endDate, seats } = req.query;
     
     // Base query for active listings
     let query = { isActive: true };
     
     // Add date range filter if provided
     if (startDate && endDate) {
+      const startDateObj = new Date(startDate);
+      const endDateObj = new Date(endDate);
+      
+      // Find listings where the requested dates fall within the available range
       query.$and = [
-        { availableFrom: { $lte: new Date(endDate) } },
-        { availableTo: { $gte: new Date(startDate) } }
+        { availableFrom: { $lte: startDateObj } },
+        { availableTo: { $gte: endDateObj } }
       ];
+      
+      // Also exclude listings that have approved or pending bookings for these dates
+      const bookedListings = await Rental.find({
+        status: { $in: ['pending', 'accepted'] },
+        $or: [
+          // Booking starts during requested period
+          { 
+            startDate: { $lte: endDateObj },
+            endDate: { $gte: startDateObj }
+          },
+          // Booking ends during requested period
+          {
+            startDate: { $lte: endDateObj },
+            endDate: { $gte: startDateObj }
+          },
+          // Booking completely encompasses requested period
+          {
+            startDate: { $lte: startDateObj },
+            endDate: { $gte: endDateObj }
+          }
+        ]
+      }).distinct('carListing');
+      
+      if (bookedListings.length > 0) {
+        query._id = { $nin: bookedListings };
+      }
     }
     
     // Add location filter if district is provided
@@ -138,6 +169,15 @@ export const getCarListings = async (req, res) => {
             'properties.subDistrict': subDistrict 
           }).distinct('_id') 
         };
+      }
+    }
+    
+    // Add seats filter if provided
+    if (seats) {
+      // Find cars with equal or more seats than requested
+      const carsWithSeats = await Car.find({ seats: { $gte: parseInt(seats) } }).distinct('_id');
+      if (carsWithSeats.length > 0) {
+        query.car = { $in: carsWithSeats };
       }
     }
     

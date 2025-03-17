@@ -19,6 +19,11 @@ import AddCar from "./pages/AddCar";
 import ViewAllCars from "./pages/ViewAllCars";
 import ChatListPage from "./pages/ChatListPage";
 import ChatPage from "./pages/ChatPage";
+import ListCarForRent from "./pages/ListCarForRent";
+import MyListings from "./pages/MyListings";
+import CarListingDetails from "./pages/CarListingDetails";
+import MyCars from "./pages/MyCars";
+import RentACar from "./pages/RentACar";
 
 export default function App() {
   return (
@@ -53,7 +58,13 @@ export default function App() {
                 {/* Protected Route */}
                 <Route path="/" element={<Home />} />
                 <Route path="/all-cars" element={<ViewAllCars />} />
+                <Route path="/rent-car" element={<RentACar />} />
+                <Route path="/car-listings/:id" element={<CarListingDetails />} />
                 <Route path="/add-car" element={<AddCar />} />
+                <Route path="/my-cars" element={<MyCars />} />
+                <Route path="/list-car" element={<ListCarForRent />} />
+                <Route path="/my-listings" element={<MyListings />} />
+                <Route path="/my-listings/:id" element={<CarListingDetails />} />
                 <Route path="/chats" element={<ChatListPage />} />
                 <Route path="/chats/:chatId" element={<ChatPage />} />
               </Route>
