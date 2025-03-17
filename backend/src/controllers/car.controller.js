@@ -6,20 +6,32 @@ import { cloudinary } from "../config/cloudinary.js";
 // @route   POST /api/cars
 // @access  Private
 export const createCar = async (req, res) => {
-  console.log("creation")
+  console.log("Car creation started");
   try {
+    console.log("Request body:", req.body);
+    console.log("Request files:", req.files);
+    
     const carData = { ...req.body };
 
     // Handle image uploads if present
     if (req.files && req.files.length > 0) {
-      carData.images = req.files.map((file) => ({
-        url: file.path,
-        publicId: file.filename,
-      }));
+      console.log(`Processing ${req.files.length} uploaded images`);
+      carData.images = req.files.map((file) => {
+        console.log("Processing file:", file.originalname);
+        return {
+          url: file.path,
+          publicId: file.filename,
+        };
+      });
+      console.log("Processed images:", carData.images);
+    } else {
+      console.log("No images uploaded");
     }
 
     // Create the car
+    console.log("Creating car with data:", carData);
     const car = await Car.create(carData);
+    console.log("Car created:", car._id);
     
     // Add the car to the user's cars array
     await User.findByIdAndUpdate(
@@ -27,9 +39,11 @@ export const createCar = async (req, res) => {
       { $push: { cars: car._id } },
       { new: true }
     );
+    console.log("Car added to user's cars array");
     
     res.status(201).json(car);
   } catch (error) {
+    console.error("Error creating car:", error);
     res.status(500).json({ message: error.message });
   }
 }; 
@@ -89,7 +103,14 @@ export const updateCar = async (req, res) => {
       // Delete old images from Cloudinary
       if (car.images && car.images.length > 0) {
         for (const image of car.images) {
-          await cloudinary.uploader.destroy(image.publicId);
+          if (image.publicId) {
+            try {
+              await cloudinary.uploader.destroy(image.publicId);
+              console.log(`Deleted image ${image.publicId} from Cloudinary`);
+            } catch (error) {
+              console.error(`Error deleting image ${image.publicId}:`, error);
+            }
+          }
         }
       }
 
@@ -132,7 +153,14 @@ export const deleteCar = async (req, res) => {
     // Delete images from Cloudinary
     if (car.images && car.images.length > 0) {
       for (const image of car.images) {
-        await cloudinary.uploader.destroy(image.publicId);
+        if (image.publicId) {
+          try {
+            await cloudinary.uploader.destroy(image.publicId);
+            console.log(`Deleted image ${image.publicId} from Cloudinary`);
+          } catch (error) {
+            console.error(`Error deleting image ${image.publicId}:`, error);
+          }
+        }
       }
     }
 
