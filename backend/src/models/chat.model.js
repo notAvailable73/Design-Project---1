@@ -1,36 +1,25 @@
-import mongoose from 'mongoose';
+// models/Chat.model.js
+import mongoose from "mongoose";
 
-const messageSchema = new mongoose.Schema({
-    sender: {
+const chatSchema = new mongoose.Schema(
+  {
+    chatName: {
+      type: String,
+      required: true,
+    },
+    users: [
+      {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+        ref: "User",
+        required: true,
+      },
+    ],
+    latestMessage: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Message",
     },
-    content: {
-        type: String,
-        required: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
-});
+  },
+  { timestamps: true }
+);
 
-const chatSchema = new mongoose.Schema({
-    participants: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    }],
-    messages: [messageSchema],
-    lastMessage: {
-        type: Date,
-        default: Date.now
-    },
-    createdAt: { 
-        type: Date,
-        default: Date.now
-    }
-});
-
-export default mongoose.model('Chat', chatSchema); 
+export default mongoose.model("Chat", chatSchema);

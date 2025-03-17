@@ -1,37 +1,35 @@
-import { Server } from 'socket.io';
+import { Server } from "socket.io";
 
 const configureSocket = (httpServer) => {
-    const io = new Server(httpServer, {
-        cors: {
-            origin: process.env.CLIENT_URL || 'http://localhost:3000',
-            methods: ['GET', 'POST']
-        }
+  const io = new Server(httpServer, {
+    cors: {
+      origin: "http://localhost:5173", // Replace with your frontend's origin
+      methods: ["GET", "POST"],
+      credentials: true, // Allow credentials if necessary
+    },
+  });
+
+  io.on("connection", (socket) => {
+    console.log("User connected:", socket.id);
+
+    // Join chat room
+    socket.on("join_chat", (chatId) => {
+      socket.join(chatId);
+      console.log(`User ${socket.id} joined chat ${chatId}`);
     });
 
-    io.on('connection', (socket) => {
-        console.log('User connected:', socket.id);
-
-        // Join chat room
-        socket.on('join_chat', (chatId) => {
-            socket.join(chatId);
-        });
-
-        // Handle new messages
-        socket.on('new_message', (data) => {
-            io.to(data.chatId).emit('message_received', data);
-        });
-
-        // Handle location updates
-        socket.on('location_update', (data) => {
-            io.to(data.carId).emit('location_updated', data);
-        });
-
-        socket.on('disconnect', () => {
-            console.log('User disconnected:', socket.id);
-        });
+    // Handle new messages
+    socket.on("new_message", (data) => {
+      io.to(data.chatId).emit("message_received", data);
     });
 
-    return io;
+    // Handle disconnection
+    socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.id);
+    });
+  });
+
+  return io; // Make sure to return the `io` instance
 };
 
-export default configureSocket; 
+export default configureSocket;

@@ -16,6 +16,9 @@ import "react-toastify/dist/ReactToastify.css"; // Import the CSS for toast noti
 import ProtectedRoute from "./components/ProtectedRoute";
 import Sidebar from "./components/SideBar";
 import AddCar from "./pages/AddCar";
+import ViewAllCars from "./pages/ViewAllCars";
+import ChatListPage from "./pages/ChatListPage";
+import ChatPage from "./pages/ChatPage";
 
 export default function App() {
   return (
@@ -49,7 +52,10 @@ export default function App() {
                 {" "}
                 {/* Protected Route */}
                 <Route path="/" element={<Home />} />
+                <Route path="/all-cars" element={<ViewAllCars />} />
                 <Route path="/add-car" element={<AddCar />} />
+                <Route path="/chats" element={<ChatListPage />} />
+                <Route path="/chats/:chatId" element={<ChatPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

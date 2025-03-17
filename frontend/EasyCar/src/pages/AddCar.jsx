@@ -69,23 +69,27 @@ export default function AddCar() {
 
     try {
       //   Upload images to a cloud service (e.g., Cloudinary) and get URLs
-      const uploadedImages = await Promise.all(
-        imageFiles.map(async (file) => {
-          const formData = new FormData();
-          formData.append("file", file);
-          formData.append("upload_preset", "EasyCar"); // Replace with your Cloudinary upload preset
+      //   const uploadedImages = await Promise.all(
+      //     imageFiles.map(async (file) => {
+      //       const formData = new FormData();
+      //       formData.append("file", file);
+      //       formData.append("upload_preset", "EasyCar");
+      //       formData.append("cloud_name", "ddl67pps0");
+      //       // Replace with your Cloudinary upload preset
 
-          const response = await axiosInstance.post(
-            "https://api.cloudinary.com/v1_1/ddl67pps0/image/upload", // Replace with your Cloudinary cloud name
-            formData
-          );
-          return {
-            url: response.data.secure_url,
-            publicId: response.data.public_id,
-          };
-        })
-      );
-      // Add the car to the database
+      //       const response = await axiosInstance.post(
+      //         "https://api.cloudinary.com/v1_1/ddl67pps0/image/upload", // Replace with your Cloudinary cloud name
+      //         formData
+      //       );
+      //       return {
+      //         url: response.data.secure_url,
+      //         publicId: response.data.public_id,
+      //       };
+      //     })
+      //   );
+      //   // Add the car to the database
+
+      const uploadedImages = [];
       const response = await axiosInstance.post(
         "http://localhost:8000/api/cars",
         {
