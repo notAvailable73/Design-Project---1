@@ -9,7 +9,7 @@ import {
     resendOTP
 } from '../controllers/user.controller.js';
 import { protect, isVerified } from '../middlewares/auth.middleware.js';
-import upload from '../config/multer.js';
+import { debugUpload } from '../config/cloudinary.js';
 
 const router = express.Router();
 
@@ -22,6 +22,6 @@ router.post('/login', loginUser);
 // Protected routes
 router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateUserProfile);
-router.post('/verify', protect, upload.single('nidImage'), submitVerification);
+router.post('/verify', protect, ...debugUpload.single('nidImage'), submitVerification);
 
 export default router; 

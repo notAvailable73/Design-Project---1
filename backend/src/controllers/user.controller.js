@@ -268,6 +268,8 @@ export const updateUserProfile = async (req, res) => {
 export const submitVerification = async (req, res) => {
   try {
     const { nidNumber } = req.body;
+    console.log("Request body:", req.body);
+    console.log("Request file:", req.file);
 
     // Check if image was uploaded
     if (!req.file) {
@@ -283,10 +285,28 @@ export const submitVerification = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Delete old NID image from Cloudinary if it exists
+    if (user.nidImagePublicId) {
+      try {
+        console.log("Deleting old NID image:", user.nidImagePublicId);
+        await cloudinary.uploader.destroy(user.nidImagePublicId);
+        console.log(`Deleted old NID image ${user.nidImagePublicId} from Cloudinary`);
+      } catch (error) {
+        console.error(`Error deleting old NID image ${user.nidImagePublicId}:`, error);
+      }
+    }
+
     // Save NID information
     user.nidNumber = nidNumber;
-    user.nidImage = req.file.path;
+    user.nidImage = req.file.path; // Cloudinary URL
+    user.nidImagePublicId = req.file.filename; // Cloudinary public ID
     user.isVerified = true;
+
+    console.log("Saving user with NID image:", {
+      nidNumber: user.nidNumber,
+      nidImage: user.nidImage,
+      nidImagePublicId: user.nidImagePublicId
+    });
 
     // Try to extract data from NID image if possible
     try {

@@ -34,6 +34,7 @@ build/
 *.tmp
 *.swp
 *.swo
+temp/
 
 # Coverage directory used by tools like istanbul
 coverage/
