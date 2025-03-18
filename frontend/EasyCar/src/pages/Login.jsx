@@ -72,8 +72,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black to-indigo-950 text-white">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center  text-white">
+      <div className=" p-8 rounded-lg  w-full max-w-md">
         <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
 
         {/* Display error message */}

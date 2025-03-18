@@ -4,22 +4,27 @@ import { toast } from "react-toastify";
 import axiosInstance from "../utils/axiosInstance";
 import OtpInput from "../components/OtpInput";
 import OtpTimer from "../components/OtpTimer";
+import { FaEnvelope, FaLock } from "react-icons/fa"; // Import the lock icon
 
 const SignUp = () => {
   const navigate = useNavigate();
-  
+
   // State for form data
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     password: "",
+    confirmPassword: "", // New field for confirm password
     otp: "", // New state for OTP
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false); // Track if OTP has been sent
   const [isResending, setIsResending] = useState(false); // Track if OTP is being resent
   const [otpError, setOtpError] = useState(""); // Track OTP validation errors
   const [isOtpExpired, setIsOtpExpired] = useState(false); // Track if OTP has expired
+  const [error, setError] = useState(""); // Track general errors
+  const [loading, setLoading] = useState(false); // Track loading state
 
   // Handle input changes
   const handleChange = (e) => {
@@ -36,7 +41,7 @@ const SignUp = () => {
       ...prev,
       otp: value,
     }));
-    
+
     // Clear error when user types
     if (otpError) setOtpError("");
   };
@@ -47,20 +52,23 @@ const SignUp = () => {
     setOtpError("OTP has expired. Please request a new one.");
   };
 
-  // Handle form submission 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    try {
+    // Validate password and confirm password
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      setIsSubmitting(false);
+      return;
+    }
 
+    try {
       setLoading(true); // Start loading
       setError(""); // Clear any previous errors
 
-      // Send POST request to the backend
-
       // Send signup request to the correct endpoint
-
       const response = await axiosInstance.post("/api/users/register", {
         email: formData.email,
         password: formData.password,
@@ -69,41 +77,38 @@ const SignUp = () => {
       // Store the email in localStorage or state management
       localStorage.setItem("email", formData.email); // Save email for OTP verification
       toast.success("OTP sent successfully!");
-      // Navigate to the Verify OTP page
-      navigate("/verify-otp", { state: { email: formData.email } }); // Pass email as state
+      setIsOtpSent(true); // Set OTP sent state
+      setIsOtpExpired(false); // Reset expiration state
     } catch (err) {
       // Handle errors
       if (err.response && err.response.data.message) {
         setError(err.response.data.message); // Display backend error message
       } else {
         setError("An error occurred. Please try again."); // Generic error message
-      toast.success("OTP sent to your email!");
-      setIsOtpSent(true); // Set OTP sent state
-      setIsOtpExpired(false); // Reset expiration state
-    } catch (error) {
-      console.error("Error signing up:", error);
-      toast.error(error.response?.data?.message || "Failed to sign up");
+      }
+      toast.error(err.response?.data?.message || "Failed to sign up");
     } finally {
       setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   // Handle OTP submission
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate OTP
     if (!formData.otp || formData.otp.length !== 6) {
       setOtpError("Please enter a valid 6-digit OTP");
       return;
     }
-    
+
     // Don't allow submission if OTP is expired
     if (isOtpExpired) {
       setOtpError("OTP has expired. Please request a new one.");
       return;
     }
-    
+
     setIsSubmitting(true);
 
     try {
@@ -113,12 +118,8 @@ const SignUp = () => {
         otp: formData.otp,
       });
 
-      toast.success("Account verified successfully!");
-      // Store token in localStorage if returned in response
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-      }
-      navigate("/login"); // Redirect to login after successful verification
+      toast.success("Account verified successfully! Please log in.");
+      navigate("/login"); // Redirect to login page after successful verification
     } catch (error) {
       console.error("Error verifying OTP:", error);
       setOtpError(error.response?.data?.message || "Failed to verify OTP");
@@ -127,7 +128,7 @@ const SignUp = () => {
       setIsSubmitting(false);
     }
   };
-  
+
   // Handle resend OTP
   const handleResendOtp = async () => {
     setIsResending(true);
@@ -135,12 +136,12 @@ const SignUp = () => {
       const response = await axiosInstance.post("/api/users/resend-otp", {
         email: formData.email,
       });
-      
+
       toast.info("New OTP sent to your email");
       // Reset OTP field
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        otp: ""
+        otp: "",
       }));
       setOtpError("");
       setIsOtpExpired(false);
@@ -153,57 +154,59 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black to-indigo-950 text-white overflow-hidden">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md mx-4">
-        <h1 className="text-3xl font-bold mb-6 text-center">Sign Up</h1>
-
-        {/* Display error message */}
-        {error && (
-          <div className="mb-4 p-2 bg-red-500 text-white text-sm rounded-lg text-center">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email Field */}
-          <div className="relative">
-            <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
     <div className="min-h-screen bg-gradient-to-br from-black to-indigo-950 text-white p-8">
       <h1 className="text-3xl font-bold mb-8 text-center">Sign Up</h1>
-      <form onSubmit={isOtpSent ? handleOtpSubmit : handleSubmit} className="max-w-md mx-auto space-y-6">
+      <form
+        onSubmit={isOtpSent ? handleOtpSubmit : handleSubmit}
+        className="max-w-md mx-auto space-y-6"
+      >
         {!isOtpSent ? (
           <>
-            <input
-              type="text"
-              name="name"
-              placeholder="Name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-800 rounded-lg"
-              required
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-800 rounded-lg"
-              required
-            />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-800 rounded-lg"
-              required
-            />
+            <div className="relative">
+              <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-3 bg-gray-800 rounded-lg"
+                required
+              />
+            </div>
+            <div className="relative">
+              <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-3 bg-gray-800 rounded-lg"
+                required
+              />
+            </div>
+            <div className="relative">
+              <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-3 bg-gray-800 rounded-lg"
+                required
+              />
+            </div>
+            {error && (
+              <p className="text-red-400 text-sm text-center">{error}</p>
+            )}
             <button
               type="submit"
               className={`w-full py-3 rounded-lg font-semibold transition-colors duration-300 ${
-                isSubmitting ? "bg-purple-500 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
+                isSubmitting
+                  ? "bg-purple-500 cursor-not-allowed"
+                  : "bg-purple-600 hover:bg-purple-700"
               }`}
               disabled={isSubmitting}
             >
@@ -213,31 +216,34 @@ const SignUp = () => {
         ) : (
           <>
             <div className="text-center mb-4">
-              <p className="text-gray-300">We've sent an OTP to {formData.email}</p>
-              <p className="text-sm text-gray-400 mt-1">Please enter the 6-digit code</p>
+              <p className="text-gray-300">
+                We've sent an OTP to {formData.email}
+              </p>
+              <p className="text-sm text-gray-400 mt-1">
+                Please enter the 6-digit code
+              </p>
             </div>
-            
+
             {!isOtpExpired && (
-              <OtpTimer 
-                seconds={120} 
-                onTimerComplete={handleTimerComplete} 
-              />
+              <OtpTimer seconds={120} onTimerComplete={handleTimerComplete} />
             )}
-            
-            <OtpInput 
-              length={6} 
-              value={formData.otp} 
-              onChange={handleOtpChange} 
+
+            <OtpInput
+              length={6}
+              value={formData.otp}
+              onChange={handleOtpChange}
             />
-            
+
             {otpError && (
               <p className="text-red-400 text-sm text-center">{otpError}</p>
             )}
-            
+
             <button
               type="submit"
               className={`w-full py-3 rounded-lg font-semibold transition-colors duration-300 ${
-                isSubmitting || isOtpExpired ? "bg-purple-500 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
+                isSubmitting || isOtpExpired
+                  ? "bg-purple-500 cursor-not-allowed"
+                  : "bg-purple-600 hover:bg-purple-700"
               }`}
               disabled={isSubmitting || isOtpExpired}
             >
@@ -268,7 +274,7 @@ const SignUp = () => {
             </div>
           </>
         )}
-        
+
         <div className="text-center mt-4">
           <p className="text-gray-400">
             Already have an account?{" "}
