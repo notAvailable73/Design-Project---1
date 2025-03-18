@@ -12,10 +12,12 @@ import {
 } from "react-icons/fa";
 import { MdCarRental } from "react-icons/md"; // Import icons
 import axiosInstance from "../utils/axiosInstance";
+import { useVerificationCheck } from "../components/VerificationCheck";
 
 export default function Sidebar() {
   const [userProfile, setUserProfile] = useState(null); // User profile data
   const navigate = useNavigate();
+  const { redirectToProfile } = useVerificationCheck();
 
   const fetchUserProfile = async () => {
     try {
@@ -39,6 +41,14 @@ export default function Sidebar() {
     navigate("/login"); // Redirect to the login page
   };
 
+  // Handle navigation to protected routes
+  const handleVerifiedNavigation = (route, action) => (e) => {
+    e.preventDefault(); // Prevent default Link behavior
+    if (redirectToProfile(action)) {
+      navigate(route);
+    }
+  };
+
   return (
     userProfile && (
       <div className="w-64 bg-gray-800 text-white shadow-lg min-h-min">
@@ -56,13 +66,14 @@ export default function Sidebar() {
           <div className="pt-2 border-t border-gray-700">
             <h3 className="text-sm uppercase text-gray-400 mb-2 pl-2">My Cars</h3>
             
-            <Link
-              to="/add-car"
+            <a
+              href="/add-car"
+              onClick={handleVerifiedNavigation('/add-car', 'add a car')}
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition-colors duration-300"
             >
               <FaCar className="w-6 h-6" />
               <span>Add Car</span>
-            </Link>
+            </a>
             
             <Link
               to="/my-cars"
@@ -77,13 +88,14 @@ export default function Sidebar() {
           <div className="pt-2 border-t border-gray-700">
             <h3 className="text-sm uppercase text-gray-400 mb-2 pl-2">Car Listings</h3>
             
-            <Link
-              to="/list-car"
+            <a
+              href="/list-car"
+              onClick={handleVerifiedNavigation('/list-car', 'list a car for rent')}
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition-colors duration-300"
             >
               <FaMoneyBillWave className="w-6 h-6" />
               <span>List Car for Rent</span>
-            </Link>
+            </a>
             
             <Link
               to="/my-listings"

@@ -62,8 +62,8 @@ const ListCarForRent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Add verification check
-  const { isVerified, loading: verificationLoading, requireVerification, VerificationModal } = useVerificationCheck();
+  // Keep verification hook for API calls but remove verification modal
+  const { isVerified, loading: verificationLoading, requireVerification } = useVerificationCheck();
   
   // States
   const [userCars, setUserCars] = useState([]);
@@ -105,14 +105,6 @@ const ListCarForRent = () => {
       document.head.removeChild(styleElement);
     };
   }, []);
-  
-  // Check verification when component mounts
-  useEffect(() => {
-    // If verification check is complete and user is not verified, show verification modal
-    if (!verificationLoading && !isVerified) {
-      requireVerification('list a car for rent');
-    }
-  }, [isVerified, verificationLoading]);
   
   // Fetch user's cars including those already listed
   const fetchUserCars = async () => {
@@ -193,11 +185,6 @@ const ListCarForRent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // First check if user is verified
-    if (!requireVerification('list a car for rent')) {
-      return;
-    }
-    
     if (!selectedCar) {
       toast.error("Please select a car to list for rent");
       return;
@@ -249,7 +236,7 @@ const ListCarForRent = () => {
     }
   };
 
-  if (verificationLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black to-indigo-950 text-white p-8 flex justify-center items-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
@@ -509,8 +496,6 @@ const ListCarForRent = () => {
           </form>
         )}
       </div>
-      {/* Verification Modal */}
-      <VerificationModal />
     </div>
   );
 };
