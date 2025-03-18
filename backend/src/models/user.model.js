@@ -30,6 +30,9 @@ const userSchema = new mongoose.Schema({
     nidImage: {
         type: String
     },
+    nidImagePublicId: {
+        type: String
+    },
     extractedNidData: {
         englishName: String,
         banglaName: String,

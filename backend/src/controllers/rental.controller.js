@@ -4,6 +4,63 @@ import Car from '../models/car.model.js';
 import User from '../models/user.model.js';
 import { sendEmail } from '../utils/emailService.js';
 import { isValidDistrict, isValidSubDistrict } from '../utils/locations.js';
+import Chat from '../models/chat.model.js';
+import Message from '../models/message.model.js';
+
+// Helper function to check if a car is available for the requested dates
+const isCarAvailableForDates = async (carListingId, startDate, endDate) => {
+    const startDateObj = new Date(startDate);
+    const endDateObj = new Date(endDate);
+    
+    // Find the car listing
+    const carListing = await CarListing.findById(carListingId);
+    
+    if (!carListing) {
+        return { available: false, message: 'Car listing not found' };
+    }
+    
+    // Check if the car listing is active
+    if (!carListing.isActive) {
+        return { available: false, message: 'Car listing is not active' };
+    }
+    
+    // Check if the requested dates are within the listing's availability period
+    if (startDateObj < carListing.availableFrom || endDateObj > carListing.availableTo) {
+        return { 
+            available: false, 
+            message: 'Requested dates are outside the car availability period' 
+        };
+    }
+    
+    // Check if the car is already booked for any part of the requested dates
+    const existingRental = await Rental.findOne({
+        carListing: carListingId,
+        status: { $in: ['pending', 'accepted'] },
+        $or: [
+            // Existing rental starts during requested period
+            { 
+                startDate: { $lte: endDateObj },
+                endDate: { $gte: startDateObj }
+            },
+            // Existing rental ends during requested period
+            {
+                startDate: { $lte: endDateObj },
+                endDate: { $gte: startDateObj }
+            },
+            // Existing rental completely encompasses requested period
+            {
+                startDate: { $lte: startDateObj },
+                endDate: { $gte: endDateObj }
+            }
+        ]
+    });
+    
+    if (existingRental) {
+        return { available: false, message: 'Car is already booked for the requested dates' };
+    }
+    
+    return { available: true };
+};
 
 // @desc    Create a new rental
 // @route   POST /api/rentals
@@ -15,7 +72,8 @@ export const createRental = async (req, res) => {
             startDate, 
             endDate, 
             pickupLocation, 
-            returnLocation 
+            returnLocation,
+            message 
         } = req.body;
         
         // Validate pickup location data
@@ -63,31 +121,9 @@ export const createRental = async (req, res) => {
             return res.status(400).json({ message: 'End date must be after start date' });
         }
         
-        // Check if the car is already booked for the requested dates
-        const existingRental = await Rental.findOne({
-            carListing: carListingId,
-            status: { $in: ['pending', 'accepted'] },
-            $or: [
-                // New rental starts during an existing rental
-                { 
-                    startDate: { $lte: startDateObj },
-                    endDate: { $gte: startDateObj }
-                },
-                // New rental ends during an existing rental
-                {
-                    startDate: { $lte: endDateObj },
-                    endDate: { $gte: endDateObj }
-                },
-                // New rental completely encompasses an existing rental
-                {
-                    startDate: { $gte: startDateObj },
-                    endDate: { $lte: endDateObj }
-                }
-            ]
-        });
-        
-        if (existingRental) {
-            return res.status(400).json({ message: 'Car is not available for the selected dates' });
+        const availabilityCheck = await isCarAvailableForDates(carListingId, startDateObj, endDateObj);
+        if (!availabilityCheck.available) {
+            return res.status(400).json({ message: availabilityCheck.message });
         }
         
         // Calculate total price
@@ -121,7 +157,61 @@ export const createRental = async (req, res) => {
         
         await rental.save();
         
-        res.status(201).json(rental);
+        // Create or find a chat between the renter and owner
+        let chat = await Chat.findOne({
+            $or: [
+                { participants: [req.user._id, carListing.owner._id] },
+                { participants: [carListing.owner._id, req.user._id] }
+            ]
+        });
+        
+        if (!chat) {
+            chat = new Chat({
+                participants: [req.user._id, carListing.owner._id],
+                messages: []
+            });
+            await chat.save();
+        }
+        
+        // Create a rental request message
+        const rentalRequestMsg = new Message({
+            sender: req.user._id,
+            chat: chat._id,
+            content: message || `I'd like to rent your ${carListing.car.brand} ${carListing.car.model} from ${startDateObj.toLocaleDateString()} to ${endDateObj.toLocaleDateString()}.`,
+            rentalRequest: rental._id
+        });
+        
+        await rentalRequestMsg.save();
+        
+        // Update chat with new message
+        chat.messages.push(rentalRequestMsg._id);
+        chat.lastMessage = rentalRequestMsg._id;
+        chat.updatedAt = new Date();
+        await chat.save();
+        
+        res.status(201).json({
+            rental,
+            chat: chat._id
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Check car availability for dates
+// @route   POST /api/rentals/check-availability
+// @access  Private
+export const checkAvailability = async (req, res) => {
+    try {
+        const { carListingId, startDate, endDate } = req.body;
+        
+        if (!carListingId || !startDate || !endDate) {
+            return res.status(400).json({ message: 'Car listing ID, start date, and end date are required' });
+        }
+        
+        const availability = await isCarAvailableForDates(carListingId, startDate, endDate);
+        
+        res.json(availability);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

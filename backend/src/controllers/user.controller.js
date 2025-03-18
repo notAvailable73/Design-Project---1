@@ -23,7 +23,7 @@ const generateOTP = () => {
 // @access  Public
 export const registerUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { name, email, password } = req.body;
     if (!email || !password) {
       return res
         .status(400)
@@ -54,6 +54,7 @@ export const registerUser = async (req, res) => {
       otpRecord.otp = otp;
       otpRecord.isVerified = false;
       otpRecord.userData = { 
+        name,
         email,
         password: hashedPassword,
       };
@@ -64,6 +65,7 @@ export const registerUser = async (req, res) => {
         email,
         otp,
         userData: {
+          name,
           email,
           password: hashedPassword,
         },
@@ -266,8 +268,7 @@ export const updateUserProfile = async (req, res) => {
 // @route   POST /api/users/verify
 // @access  Private
 export const submitVerification = async (req, res) => {
-  try {
-    const { nidNumber } = req.body;
+  try { 
 
     // Check if image was uploaded
     if (!req.file) {
@@ -283,19 +284,34 @@ export const submitVerification = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Save NID information
-    user.nidNumber = nidNumber;
-    user.nidImage = req.file.path;
+    // Delete old NID image from Cloudinary if it exists
+    if (user.nidImagePublicId) {
+      try {
+        console.log("Deleting old NID image:", user.nidImagePublicId);
+        await cloudinary.uploader.destroy(user.nidImagePublicId);
+        console.log(`Deleted old NID image ${user.nidImagePublicId} from Cloudinary`);
+      } catch (error) {
+        console.error(`Error deleting old NID image ${user.nidImagePublicId}:`, error);
+      }
+    }
+ 
+    user.nidImage = req.file.path; // Cloudinary URL
+    user.nidImagePublicId = req.file.filename; // Cloudinary public ID
     user.isVerified = true;
 
+    console.log("Saving user with NID image:", { 
+      nidImage: user.nidImage,
+      nidImagePublicId: user.nidImagePublicId
+    });
     // Try to extract data from NID image if possible
     try {
       const nidData = await extractNidData(req.file.path, true);
       console.log("Extracted NID data:", nidData);
-
+      
       if (!nidData.error) {
+        user.nidNumber = req.body.nidNumber;
         // Store additional extracted data
-        user.extractedNidData = {
+        user.extractedNidData = { 
           englishName: nidData.englishName || "",
           banglaName: nidData.banglaName || "",
           fatherName: nidData.fatherName || "",

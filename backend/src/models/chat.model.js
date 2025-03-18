@@ -3,20 +3,26 @@ import mongoose from "mongoose";
 
 const chatSchema = new mongoose.Schema(
   {
-    chatName: {
-      type: String,
-      required: true,
-    },
-    users: [
+    participants: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true,
       },
     ],
-    latestMessage: {
+    messages: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Message",
+      },
+    ],
+    lastMessage: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Message",
+    },
+    relatedCar: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Car",
     },
   },
   { timestamps: true }
