@@ -10,7 +10,6 @@ const SignUp = () => {
   
   // State for form data
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
     password: "",
     otp: "", // New state for OTP
@@ -54,13 +53,30 @@ const SignUp = () => {
     setIsSubmitting(true);
 
     try {
+
+      setLoading(true); // Start loading
+      setError(""); // Clear any previous errors
+
+      // Send POST request to the backend
+
       // Send signup request to the correct endpoint
+
       const response = await axiosInstance.post("/api/users/register", {
-        name: formData.name,
         email: formData.email,
         password: formData.password,
       });
 
+      // Store the email in localStorage or state management
+      localStorage.setItem("email", formData.email); // Save email for OTP verification
+      toast.success("OTP sent successfully!");
+      // Navigate to the Verify OTP page
+      navigate("/verify-otp", { state: { email: formData.email } }); // Pass email as state
+    } catch (err) {
+      // Handle errors
+      if (err.response && err.response.data.message) {
+        setError(err.response.data.message); // Display backend error message
+      } else {
+        setError("An error occurred. Please try again."); // Generic error message
       toast.success("OTP sent to your email!");
       setIsOtpSent(true); // Set OTP sent state
       setIsOtpExpired(false); // Reset expiration state
@@ -137,6 +153,21 @@ const SignUp = () => {
   };
 
   return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black to-indigo-950 text-white overflow-hidden">
+      <div className="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md mx-4">
+        <h1 className="text-3xl font-bold mb-6 text-center">Sign Up</h1>
+
+        {/* Display error message */}
+        {error && (
+          <div className="mb-4 p-2 bg-red-500 text-white text-sm rounded-lg text-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Email Field */}
+          <div className="relative">
+            <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
     <div className="min-h-screen bg-gradient-to-br from-black to-indigo-950 text-white p-8">
       <h1 className="text-3xl font-bold mb-8 text-center">Sign Up</h1>
       <form onSubmit={isOtpSent ? handleOtpSubmit : handleSubmit} className="max-w-md mx-auto space-y-6">

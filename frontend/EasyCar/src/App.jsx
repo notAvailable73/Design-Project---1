@@ -19,6 +19,7 @@ import AddCar from "./pages/AddCar";
 import ViewAllCars from "./pages/ViewAllCars";
 import ChatListPage from "./pages/ChatListPage";
 import ChatPage from "./pages/ChatPage";
+import VerifyOTP from "./pages/VerifyOtp";
 import ListCarForRent from "./pages/ListCarForRent";
 import MyListings from "./pages/MyListings";
 import CarListingDetails from "./pages/CarListingDetails";
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="/signup" element={<SignUp />} />
               <Route path="/login" element={<Login />} />
               <Route path="/user-profile" element={<UserProfile />} />
+              <Route path="/verify-otp" element={<VerifyOTP />} />
               <Route element={<ProtectedRoute />}>
                 {" "}
                 {/* Protected Route */}
