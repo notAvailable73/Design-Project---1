@@ -11,15 +11,20 @@ const ChatListPage = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Add verification check
-  const { isVerified, loading: verificationLoading, requireVerification, VerificationModal } = useVerificationCheck();
+  const {
+    isVerified,
+    loading: verificationLoading,
+    requireVerification,
+    VerificationModal,
+  } = useVerificationCheck();
 
   // Fetch chats for the user
   useEffect(() => {
     fetchChats();
   }, []);
-  
+
   // Handle chat creation from navigation state
   useEffect(() => {
     // Check if we have user and car ID from navigation state (from car listing details page)
@@ -32,6 +37,7 @@ const ChatListPage = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get("/api/chats");
+      console.log(response.data);
       setChats(response.data);
       setLoading(false);
     } catch (error) {
@@ -39,21 +45,21 @@ const ChatListPage = () => {
       setLoading(false);
     }
   };
-  
+
   // Create a new chat or navigate to existing one
   const handleCreateChat = async (userId, carId) => {
     // Check if user is verified
-    if (!requireVerification('message a car owner')) {
+    if (!requireVerification("message a car owner")) {
       return;
     }
-    
+
     try {
       // Create or get existing chat
       const response = await axiosInstance.post("/api/chats", {
         participantId: userId,
-        carId: carId
+        carId: carId,
       });
-      
+
       // Navigate to the chat
       navigate(`/chats/${response.data._id}`);
     } catch (error) {
@@ -85,12 +91,13 @@ const ChatListPage = () => {
           <div className="bg-gray-800 p-8 rounded-lg text-center">
             <p className="text-xl mb-4">You don't have any chats yet</p>
             <p className="text-gray-400">
-              Start a conversation with a car owner by viewing their car listing and clicking on "Message Owner"
+              Start a conversation with a car owner by viewing their car listing
+              and clicking on "Message Owner"
             </p>
           </div>
         )}
       </div>
-      
+
       {/* Verification Modal */}
       <VerificationModal />
     </div>
