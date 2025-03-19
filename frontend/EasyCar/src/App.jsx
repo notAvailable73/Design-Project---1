@@ -27,6 +27,7 @@ import CarListingDetails from "./pages/CarListingDetails";
 import MyCars from "./pages/MyCars";
 import RentACar from "./pages/RentACar";
 import LocationTracker from "./pages/LocationTracker";
+import SearchedMap from "./pages/SearchedMap";
 
 export default function App() {
   return (
@@ -58,6 +59,7 @@ export default function App() {
               <Route path="/user-profile" element={<UserProfile />} />
               <Route path="/verify-otp" element={<VerifyOTP />} />
               <Route path="/location" element={<LocationTracker />} />
+              <Route path="/search-location" element={<SearchedMap />} />
               <Route element={<ProtectedRoute />}>
                 {" "}
                 {/* Protected Route */}
