@@ -64,8 +64,8 @@ export default function Sidebar() {
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    setUserProfile(null); // Remove the token from localStorage
+    localStorage.clear(); // Clear all localStorage items including token and userId
+    setUserProfile(null);
     navigate("/login"); // Redirect to the login page
   };
 

@@ -43,8 +43,9 @@ export default function Login() {
       if (response.data) {
         console.log("Login successful:", response.data);
 
-        // Store the token in localStorage (or cookies)
+        // Store the token and user ID in localStorage
         localStorage.setItem("token", response.data.token);
+        localStorage.setItem("userId", response.data._id);
 
         // Show success toast
         toast.success("Login successful!", {
