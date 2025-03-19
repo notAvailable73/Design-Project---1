@@ -47,6 +47,7 @@ export const useVerificationCheck = () => {
   const [loading, setLoading] = useState(true);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState('');
+  const navigate = useNavigate();
   
   useEffect(() => {
     checkVerification();
@@ -77,10 +78,24 @@ export const useVerificationCheck = () => {
     return true;
   };
   
+  // Function to redirect to user profile with verification message
+  const redirectToProfile = (action) => {
+    if (loading) return false;
+    
+    if (!isVerified) {
+      toast.warning(`Verification required: You need to verify your NID before you can ${action}.`);
+      navigate('/user-profile');
+      return false;
+    }
+    
+    return true;
+  };
+  
   return {
     isVerified,
     loading,
     requireVerification,
+    redirectToProfile,
     VerificationModal: () => (
       <VerificationCheck
         isOpen={showVerificationModal}

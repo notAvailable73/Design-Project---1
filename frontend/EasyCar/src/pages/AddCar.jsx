@@ -19,15 +19,10 @@ import { useVerificationCheck } from "../components/VerificationCheck";
 
 export default function AddCar() {
   const navigate = useNavigate();
-  const { isVerified, loading: verificationLoading, requireVerification, VerificationModal } = useVerificationCheck();
+  // Keep the hook but we'll only use it for API calls, not for showing modal
+  const { requireVerification } = useVerificationCheck();
 
-  // Check verification when component mounts
-  useEffect(() => {
-    // If verification check is complete and user is not verified, show verification modal
-    if (!verificationLoading && !isVerified) {
-      requireVerification('add a car');
-    }
-  }, [isVerified, verificationLoading]);
+  // Remove the verification check useEffect since we're handling it at the route level
 
   // State for form data
   const [formData, setFormData] = useState({
@@ -77,11 +72,6 @@ export default function AddCar() {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // First check if user is verified
-    if (!requireVerification('add a car')) {
-      return;
-    }
     
     // Set submitting state to true
     setIsSubmitting(true);
@@ -151,7 +141,7 @@ export default function AddCar() {
       });
 
       // Redirect to the dashboard or home page
-      navigate("/");
+      navigate("/my-cars");
     } catch (err) {
       console.error("Failed to add car:", err);
       
@@ -172,14 +162,6 @@ export default function AddCar() {
       setIsSubmitting(false);
     }
   };
-
-  if (verificationLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-black to-indigo-950 text-white p-8 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black to-indigo-950 text-white p-8">
@@ -366,9 +348,6 @@ export default function AddCar() {
           {isSubmitting ? "Adding your car..." : "Add Car"}
         </button>
       </form>
-      
-      {/* Verification Modal */}
-      <VerificationModal />
     </div>
   );
 }

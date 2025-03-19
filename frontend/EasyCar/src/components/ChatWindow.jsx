@@ -61,8 +61,13 @@ const ChatWindow = ({ chat, socket, currentUserId }) => {
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Messages */}
+    <div className="min-h-screen flex flex-col bg-gray-900">
+      {/* Car Details */}
+      <p className="text-white text-3xl flex justify-center mt-4">
+        {`${chat.relatedCar.brand} ${chat.relatedCar.model} ${chat.relatedCar.year}`}
+      </p>
+
+      {/* Messages Section */}
       <div className="flex-1 overflow-y-auto p-4">
         {messages.map((message, index) => (
           <Message
@@ -74,22 +79,24 @@ const ChatWindow = ({ chat, socket, currentUserId }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="p-4 bg-gray-800">
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          className="w-full p-2 bg-gray-700 text-white rounded"
-          placeholder="Type a message..."
-          onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-        />
-        <button
-          onClick={sendMessage}
-          className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
-        >
-          Send
-        </button>
+      {/* Input Section */}
+      <div className="bg-gray-800 p-4">
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            className="flex-1 p-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Type a message..."
+            onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+          />
+          <button
+            onClick={sendMessage}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );

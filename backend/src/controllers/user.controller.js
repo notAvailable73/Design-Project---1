@@ -219,12 +219,21 @@ export const getUserProfile = async (req, res) => {
     const user = await User.findById(req.user._id);
 
     if (user) {
-      res.json({
+      const responseData = {
         _id: user._id,
         name: user.name,
         email: user.email,
         isVerified: user.isVerified,
-      });
+      };
+
+      // Include NID information if user is verified
+      if (user.isVerified) {
+        responseData.nidNumber = user.nidNumber;
+        responseData.nidImage = user.nidImage;
+        responseData.extractedNidData = user.extractedNidData;
+      }
+
+      res.json(responseData);
     } else {
       res.status(404).json({ message: "User not found" });
     }
@@ -297,19 +306,31 @@ export const submitVerification = async (req, res) => {
  
     user.nidImage = req.file.path; // Cloudinary URL
     user.nidImagePublicId = req.file.filename; // Cloudinary public ID
-    user.isVerified = true;
+    
+    // Don't set isVerified yet - wait for NID data extraction
+    let verificationSuccess = false;
+    let extractionError = null;
 
     console.log("Saving user with NID image:", { 
       nidImage: user.nidImage,
       nidImagePublicId: user.nidImagePublicId
     });
+    
     // Try to extract data from NID image if possible
     try {
       const nidData = await extractNidData(req.file.path, true);
       console.log("Extracted NID data:", nidData);
       
-      if (!nidData.error) {
-        user.nidNumber = req.body.nidNumber;
+      if (nidData.error) {
+        console.error("Error extracting NID data:", nidData.error);
+        extractionError = nidData.error;
+      } else if (!nidData.numberNID) {
+        // If no NID number was detected
+        extractionError = "Could not detect NID number from the image. Please upload a clearer image.";
+      } else {
+        // NID number was successfully detected
+        user.nidNumber = nidData.numberNID;
+        
         // Store additional extracted data
         user.extractedNidData = { 
           englishName: nidData.englishName || "",
@@ -319,33 +340,38 @@ export const submitVerification = async (req, res) => {
           birthDate: nidData.birthDate || "",
         };
 
-        // Use extracted NID number if available
-        if (nidData.numberNID) {
-          user.nidNumber = nidData.numberNID;
-        }
-      } else {
-        console.error("Error extracting NID data:", nidData.error);
+        // Only set verified if we have a valid NID number
+        user.isVerified = true;
+        verificationSuccess = true;
       }
     } catch (error) {
       console.error("NID extraction error:", error.message);
-      // Continue with verification even if extraction fails
+      extractionError = "Failed to process NID image. Please try again with a clearer image.";
     }
 
     // Save user with or without extracted data
     const updatedUser = await user.save();
 
     // Return response
-    res.json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      isVerified: updatedUser.isVerified,
-      nidImage: updatedUser.nidImage,
-      nidNumber: updatedUser.nidNumber,
-      extractedNidData: updatedUser.extractedNidData || {
-        note: "NID data extraction not available. Please install required Python packages.",
-      },
-    });
+    if (verificationSuccess) {
+      res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        isVerified: updatedUser.isVerified,
+        nidImage: updatedUser.nidImage,
+        nidNumber: updatedUser.nidNumber,
+        extractedNidData: updatedUser.extractedNidData,
+      });
+    } else {
+      res.status(400).json({
+        message: extractionError || "NID verification failed. Please upload a clearer image of your NID card.",
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        isVerified: updatedUser.isVerified,
+      });
+    }
   } catch (error) {
     console.error("Verification error:", error);
     res.status(500).json({ message: error.message });

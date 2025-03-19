@@ -14,6 +14,7 @@ import Header from "./components/Header";
 import { ToastContainer } from "react-toastify"; // Import ToastContainer
 import "react-toastify/dist/ReactToastify.css"; // Import the CSS for toast notifications
 import ProtectedRoute from "./components/ProtectedRoute";
+import VerifiedRoute from "./components/VerifiedRoute";
 import Sidebar from "./components/SideBar";
 import AddCar from "./pages/AddCar";
 import ViewAllCars from "./pages/ViewAllCars";
@@ -25,6 +26,7 @@ import MyListings from "./pages/MyListings";
 import CarListingDetails from "./pages/CarListingDetails";
 import MyCars from "./pages/MyCars";
 import RentACar from "./pages/RentACar";
+import LocationTracker from "./pages/LocationTracker";
 
 export default function App() {
   return (
@@ -55,18 +57,39 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/user-profile" element={<UserProfile />} />
               <Route path="/verify-otp" element={<VerifyOTP />} />
+              <Route path="/location" element={<LocationTracker />} />
               <Route element={<ProtectedRoute />}>
                 {" "}
                 {/* Protected Route */}
                 <Route path="/" element={<Home />} />
                 <Route path="/all-cars" element={<ViewAllCars />} />
                 <Route path="/rent-car" element={<RentACar />} />
-                <Route path="/car-listings/:id" element={<CarListingDetails />} />
-                <Route path="/add-car" element={<AddCar />} />
+                <Route
+                  path="/car-listings/:id"
+                  element={<CarListingDetails />}
+                />
+                {/* Routes requiring verification */}
+                <Route
+                  path="/add-car"
+                  element={
+                    <VerifiedRoute element={<AddCar />} action="add a car" />
+                  }
+                />
                 <Route path="/my-cars" element={<MyCars />} />
-                <Route path="/list-car" element={<ListCarForRent />} />
+                <Route
+                  path="/list-car"
+                  element={
+                    <VerifiedRoute
+                      element={<ListCarForRent />}
+                      action="list a car for rent"
+                    />
+                  }
+                />
                 <Route path="/my-listings" element={<MyListings />} />
-                <Route path="/my-listings/:id" element={<CarListingDetails />} />
+                <Route
+                  path="/my-listings/:id"
+                  element={<CarListingDetails />}
+                />
                 <Route path="/chats" element={<ChatListPage />} />
                 <Route path="/chats/:chatId" element={<ChatPage />} />
               </Route>

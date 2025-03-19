@@ -13,11 +13,11 @@ const ChatList = ({ chats, onSelectChat }) => {
             onClick={() => onSelectChat(chat)}
           >
             <p className="text-white font-semibold text-lg">
-              {chat.chatName.toUpperCase()}
+              {`${chat.relatedCar.brand} ${chat.relatedCar.model} ${chat.relatedCar.year}`}
             </p>
-            {chat.latestMessage && (
+            {chat.lastMessage && (
               <p className="text-gray-400 text-sm mt-1 truncate">
-                {chat.latestMessage.content}
+                {chat.lastMessage.content}
               </p>
             )}
           </div>

@@ -1,18 +1,24 @@
 import Chat from "../models/chat.model.js";
 import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
+import Car from "../models/car.model.js";
 
 // @desc    Get user's chats
 // @route   GET /api/chats
 // @access  Private
 export const getChats = async (req, res) => {
   try {
+    console.log(req.user._id);
+
     const chats = await Chat.find({
-      users: req.user._id,
+      participants: req.user._id,
     })
-      .populate("users", "name email")
-      .populate("latestMessage")
+      .populate("participants", "name email")
+      .populate("relatedCar", "brand model year")
+      .populate("lastMessage")
+
       .sort({ updatedAt: -1 });
+    console.log(chats);
     res.json(chats);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -25,15 +31,20 @@ export const getChats = async (req, res) => {
 export const getChatById = async (req, res) => {
   try {
     const chat = await Chat.findById(req.params.id)
-      .populate("users", "name email")
-      .populate("latestMessage");
+      .populate("participants", "name email")
+      .populate("relatedCar", "brand model year")
+      .populate("lastMessage");
 
     if (!chat) {
       return res.status(404).json({ message: "Chat not found" });
     }
 
     // Check if user is a participant
-    if (!chat.users.some((p) => p._id.toString() === req.user._id.toString())) {
+    if (
+      !chat.participants.some(
+        (p) => p._id.toString() === req.user._id.toString()
+      )
+    ) {
       return res.status(401).json({ message: "Not authorized" });
     }
 
@@ -48,27 +59,39 @@ export const getChatById = async (req, res) => {
 // @access  Private
 export const createChat = async (req, res) => {
   try {
-    const { participantId } = req.body;
+    const { participantId, carId } = req.body;
+
+    // Fetch the participant and car from the database
     const participant = await User.findById(participantId);
+    const car = await Car.findById(carId);
+
     if (!participant) {
       return res.status(404).json({ message: "Participant not found" });
     }
+
+    if (!car) {
+      return res.status(404).json({ message: "Car not found" });
+    }
+
     // Check if chat already exists
-    const chatName = participant.name;
     const existingChat = await Chat.findOne({
-      users: { $all: [req.user._id, participantId] },
+      participants: { $all: [req.user._id, participantId] },
+      relatedCar: carId,
     });
 
     if (existingChat) {
       return res.json(existingChat);
     }
 
+    // Create a new chat with the related car
     const chat = await Chat.create({
-      users: [req.user._id, participantId],
-      chatName,
+      participants: [req.user._id, participantId],
+      relatedCar: [carId],
     });
 
-    await chat.populate("users", "name email");
+    await chat.populate("participants", "name email");
+    await chat.populate("relatedCar", "brand model year"); // Populate the related car details
+
     res.status(201).json(chat);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -89,7 +112,9 @@ export const sendMessage = async (req, res) => {
     }
 
     // Check if user is a participant
-    if (!chat.users.some((p) => p.toString() === req.user._id.toString())) {
+    if (
+      !chat.participants.some((p) => p.toString() === req.user._id.toString())
+    ) {
       return res.status(401).json({ message: "Not authorized" });
     }
 
@@ -102,7 +127,7 @@ export const sendMessage = async (req, res) => {
 
     // Update the chat's latest message
     await Chat.findByIdAndUpdate(chat._id, {
-      latestMessage: message._id,
+      lastMessage: message._id,
     });
 
     await message.populate("sender", "name email");
@@ -120,7 +145,9 @@ export const getChatMessages = async (req, res) => {
     }
 
     // Check if user is a participant
-    if (!chat.users.some((p) => p.toString() === req.user._id.toString())) {
+    if (
+      !chat.participants.some((p) => p.toString() === req.user._id.toString())
+    ) {
       return res.status(401).json({ message: "Not authorized" });
     }
     // Fetch all messages for the chat
