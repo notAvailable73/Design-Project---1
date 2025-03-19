@@ -26,6 +26,7 @@ import MyListings from "./pages/MyListings";
 import CarListingDetails from "./pages/CarListingDetails";
 import MyCars from "./pages/MyCars";
 import RentACar from "./pages/RentACar";
+import LocationTracker from "./pages/LocationTracker";
 
 export default function App() {
   return (
@@ -56,35 +57,39 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/user-profile" element={<UserProfile />} />
               <Route path="/verify-otp" element={<VerifyOTP />} />
+              <Route path="/location" element={<LocationTracker />} />
               <Route element={<ProtectedRoute />}>
                 {" "}
                 {/* Protected Route */}
                 <Route path="/" element={<Home />} />
                 <Route path="/all-cars" element={<ViewAllCars />} />
                 <Route path="/rent-car" element={<RentACar />} />
-                <Route path="/car-listings/:id" element={<CarListingDetails />} />
+                <Route
+                  path="/car-listings/:id"
+                  element={<CarListingDetails />}
+                />
                 {/* Routes requiring verification */}
-                <Route 
-                  path="/add-car" 
+                <Route
+                  path="/add-car"
                   element={
-                    <VerifiedRoute 
-                      element={<AddCar />} 
-                      action="add a car"
-                    />
-                  } 
+                    <VerifiedRoute element={<AddCar />} action="add a car" />
+                  }
                 />
                 <Route path="/my-cars" element={<MyCars />} />
-                <Route 
-                  path="/list-car" 
+                <Route
+                  path="/list-car"
                   element={
-                    <VerifiedRoute 
+                    <VerifiedRoute
                       element={<ListCarForRent />}
                       action="list a car for rent"
                     />
-                  } 
+                  }
                 />
                 <Route path="/my-listings" element={<MyListings />} />
-                <Route path="/my-listings/:id" element={<CarListingDetails />} />
+                <Route
+                  path="/my-listings/:id"
+                  element={<CarListingDetails />}
+                />
                 <Route path="/chats" element={<ChatListPage />} />
                 <Route path="/chats/:chatId" element={<ChatPage />} />
               </Route>

@@ -23,7 +23,7 @@ const configureExpress = () => {
   // Middleware
 
   const corsOptions = {
-    origin: "http://localhost:5173", // Allow this origin
+    origin: ["http://localhost:5173", "http://localhost:5174"], // Allow this origin
     methods: ["GET", "POST", "PUT", "DELETE"], // Add allowed methods
     credentials: true, // Allow credentials (if needed)
   };

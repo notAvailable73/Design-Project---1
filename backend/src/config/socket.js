@@ -3,9 +3,9 @@ import { Server } from "socket.io";
 const configureSocket = (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:5173", // Replace with your frontend's origin
+      origin: ["http://localhost:5173", "http://localhost:5174"], // Allow both origins
       methods: ["GET", "POST"],
-      credentials: true, // Allow credentials if necessary
+      credentials: true,
     },
   });
 
