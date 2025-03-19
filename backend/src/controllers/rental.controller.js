@@ -181,7 +181,7 @@ export const createRental = async (req, res) => {
         const rentalRequestMsg = new Message({
             sender: req.user._id,
             chat: chat._id,
-            content: message || `I'd like to rent your ${carListing.car.brand} ${carListing.car.model} from ${startDateObj.toLocaleDateString()} to ${endDateObj.toLocaleDateString()}.`,
+            content: message || `I'd like to rent your ${carListing.car.make} ${carListing.car.model} from ${startDateObj.toLocaleDateString()} to ${endDateObj.toLocaleDateString()}.`,
             rentalRequest: rental._id
         });
         
@@ -332,38 +332,63 @@ export const updateRentalStatus = async (req, res) => {
         // Send email notification
         let emailSubject, emailText;
         
-        if (status === 'accepted') {
-            emailSubject = 'Rental Request Accepted';
-            emailText = `Your rental request for ${rental.car.brand} ${rental.car.model} has been accepted.`;
-            await sendEmail({
-                to: rental.renter.email,
-                subject: emailSubject,
-                text: emailText
-            });
-        } else if (status === 'rejected') {
-            emailSubject = 'Rental Request Rejected';
-            emailText = `Your rental request for ${rental.car.brand} ${rental.car.model} has been rejected.`;
-            await sendEmail({
-                to: rental.renter.email,
-                subject: emailSubject,
-                text: emailText
-            });
-        } else if (status === 'cancelled') {
-            emailSubject = 'Rental Cancelled';
-            emailText = `The rental for ${rental.car.brand} ${rental.car.model} has been cancelled by the renter.`;
-            await sendEmail({
-                to: rental.owner.email,
-                subject: emailSubject,
-                text: emailText
-            });
-        } else if (status === 'completed') {
-            emailSubject = 'Rental Completed';
-            emailText = `Your rental of ${rental.car.brand} ${rental.car.model} has been marked as completed.`;
-            await sendEmail({
-                to: rental.renter.email,
-                subject: emailSubject,
-                text: emailText
-            });
+        try {
+            if (status === 'accepted') {
+                emailSubject = 'Rental Request Accepted';
+                emailText = `Your rental request for ${rental.car.make} ${rental.car.model} has been accepted.`;
+                
+                if (rental.renter && rental.renter.email) {
+                    await sendEmail({
+                        to: rental.renter.email,
+                        subject: emailSubject,
+                        text: emailText
+                    });
+                } else {
+                    console.log('Cannot send email: Missing renter email');
+                }
+            } else if (status === 'rejected') {
+                emailSubject = 'Rental Request Rejected';
+                emailText = `Your rental request for ${rental.car.make} ${rental.car.model} has been rejected.`;
+                
+                if (rental.renter && rental.renter.email) {
+                    await sendEmail({
+                        to: rental.renter.email,
+                        subject: emailSubject,
+                        text: emailText
+                    });
+                } else {
+                    console.log('Cannot send email: Missing renter email');
+                }
+            } else if (status === 'cancelled') {
+                emailSubject = 'Rental Cancelled';
+                emailText = `The rental for ${rental.car.make} ${rental.car.model} has been cancelled by the renter.`;
+                
+                if (rental.owner && rental.owner.email) {
+                    await sendEmail({
+                        to: rental.owner.email,
+                        subject: emailSubject,
+                        text: emailText
+                    });
+                } else {
+                    console.log('Cannot send email: Missing owner email');
+                }
+            } else if (status === 'completed') {
+                emailSubject = 'Rental Completed';
+                emailText = `Your rental of ${rental.car.make} ${rental.car.model} has been marked as completed.`;
+                
+                if (rental.renter && rental.renter.email) {
+                    await sendEmail({
+                        to: rental.renter.email,
+                        subject: emailSubject,
+                        text: emailText
+                    });
+                } else {
+                    console.log('Cannot send email: Missing renter email');
+                }
+            }
+        } catch (emailError) {
+            // Log the error but don't stop the process
+            console.error('Failed to send email notification:', emailError);
         }
         
         res.json(rental);

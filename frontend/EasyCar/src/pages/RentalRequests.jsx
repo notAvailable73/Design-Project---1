@@ -1,7 +1,18 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { toast } from "react-toastify";
-import { FaCheck, FaTimes, FaSpinner, FaBell, FaHistory, FaCheckCircle, FaTimesCircle, FaSync } from "react-icons/fa";
+import { 
+  FaCheck, 
+  FaTimes, 
+  FaSpinner, 
+  FaBell, 
+  FaHistory, 
+  FaCheckCircle, 
+  FaTimesCircle, 
+  FaSync,
+  FaCar,
+  FaUser
+} from "react-icons/fa";
 
 // Debug helper component
 const DebugSummary = ({ userId, profileId, rentals, allRentals }) => {
@@ -98,12 +109,29 @@ const RentalRequests = () => {
               
             if (isOwner) {
               console.log("Found matching rental for owner:", rental._id);
+              
+              // Add a display role to help distinguish owner/renter view
+              rental.viewRole = "owner";
             }
             
             return isOwner;
           });
         } else {
           console.log("Showing all rentals without owner filtering");
+          
+          // Add viewRole to all rentals
+          userRentals.forEach(rental => {
+            const ownerId = rental.owner?._id;
+            const renterId = rental.renter?._id;
+            
+            if (ownerId === userId || ownerId?.toString() === userId) {
+              rental.viewRole = "owner";
+            } else if (renterId === userId || renterId?.toString() === userId) {
+              rental.viewRole = "renter";
+            } else {
+              rental.viewRole = "none";
+            }
+          });
         }
         
         console.log("Filtered rentals for user:", userRentals);
@@ -152,10 +180,21 @@ const RentalRequests = () => {
       // Refresh the rentals list to ensure we have the latest data
       await fetchRentals(true);
       
-      toast.success(`Rental request ${status === 'accepted' ? 'accepted' : 'rejected'}`);
+      // Display a more informative success message based on the status
+      if (status === 'accepted') {
+        toast.success("Rental request accepted successfully! The renter will be notified.");
+      } else if (status === 'rejected') {
+        toast.success("Rental request rejected. The renter will be notified.");
+      } else if (status === 'completed') {
+        toast.success("Rental has been marked as completed!");
+      } else if (status === 'cancelled') {
+        toast.success("Rental has been cancelled successfully.");
+      } else {
+        toast.success(`Rental status updated to ${status}.`);
+      }
     } catch (error) {
       console.error("Error updating rental status:", error);
-      toast.error(error.response?.data?.message || `Failed to ${status} rental request`);
+      toast.error(error.response?.data?.message || `Failed to update rental status to ${status}`);
     } finally {
       setProcessingId(null);
     }
@@ -166,6 +205,8 @@ const RentalRequests = () => {
     if (activeTab === "pending") return rental.status === "pending";
     if (activeTab === "accepted") return rental.status === "accepted";
     if (activeTab === "rejected") return rental.status === "rejected";
+    if (activeTab === "completed") return rental.status === "completed";
+    if (activeTab === "cancelled") return rental.status === "cancelled";
     if (activeTab === "all") return true;
     return false;
   });
@@ -174,6 +215,8 @@ const RentalRequests = () => {
   const pendingCount = rentals.filter(r => r.status === "pending").length;
   const acceptedCount = rentals.filter(r => r.status === "accepted").length;
   const rejectedCount = rentals.filter(r => r.status === "rejected").length;
+  const completedCount = rentals.filter(r => r.status === "completed").length;
+  const cancelledCount = rentals.filter(r => r.status === "cancelled").length;
 
   // Add a function to test ID comparison logic
   const testIdComparison = (rental) => {
@@ -217,14 +260,20 @@ const RentalRequests = () => {
   return (
     <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-white">
-          Rental Requests
-          {showAllRentals && (
-            <span className="ml-2 text-sm bg-yellow-500 text-black px-2 py-1 rounded-full">
-              Showing All Rentals
-            </span>
-          )}
-        </h1>
+        <div>
+          <h1 className="text-3xl font-bold text-white">
+            Rental Requests
+            {showAllRentals && (
+              <span className="ml-2 text-sm bg-yellow-500 text-black px-2 py-1 rounded-full">
+                Showing All Rentals
+              </span>
+            )}
+          </h1>
+          <p className="text-gray-400 mt-2">
+            This page shows rental requests where you are the owner. 
+            {showAllRentals && " With 'Show All Rentals' enabled, it also shows rentals where you are the renter."}
+          </p>
+        </div>
         
         <div className="flex gap-2">
           <button 
@@ -266,6 +315,14 @@ const RentalRequests = () => {
             rentals={rentals} 
             allRentals={allRentals} 
           />
+          
+          <div className="p-3 bg-yellow-800 bg-opacity-40 rounded mb-4">
+            <h3 className="text-md font-semibold text-yellow-400 mb-1">Note about email notifications:</h3>
+            <p className="text-white text-sm">
+              In development mode, emails may not be sent if email credentials are not configured.
+              Status updates will still work correctly, but notification emails might not be delivered.
+            </p>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -359,6 +416,7 @@ const RentalRequests = () => {
                   <th className="border border-gray-600 px-4 py-2">Owner ID</th>
                   <th className="border border-gray-600 px-4 py-2">Renter ID</th>
                   <th className="border border-gray-600 px-4 py-2">Status</th>
+                  <th className="border border-gray-600 px-4 py-2">Role</th>
                   <th className="border border-gray-600 px-4 py-2">Match?</th>
                   <th className="border border-gray-600 px-4 py-2">Actions</th>
                 </tr>
@@ -374,6 +432,15 @@ const RentalRequests = () => {
                       {rental.renter ? rental.renter._id : 'N/A'}
                     </td>
                     <td className="border border-gray-600 px-4 py-2">{rental.status}</td>
+                    <td className="border border-gray-600 px-4 py-2">
+                      {rental.viewRole === 'owner' ? (
+                        <span className="bg-green-600 text-white text-xs px-2 py-1 rounded">Owner</span>
+                      ) : rental.viewRole === 'renter' ? (
+                        <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">Renter</span>
+                      ) : (
+                        <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded">None</span>
+                      )}
+                    </td>
                     <td className="border border-gray-600 px-4 py-2">
                       {rental.owner && (rental.owner._id === localStorage.getItem("userId") || 
                       rental.owner._id.toString() === localStorage.getItem("userId")) ? 
@@ -461,6 +528,38 @@ const RentalRequests = () => {
           )}
         </button>
         <button
+          onClick={() => setActiveTab("completed")}
+          className={`flex items-center px-6 py-3 font-medium text-sm ${
+            activeTab === "completed" 
+              ? "border-b-2 border-indigo-500 text-indigo-500" 
+              : "text-gray-400 hover:text-white"
+          }`}
+        >
+          <FaCheckCircle className="mr-2" />
+          Completed
+          {completedCount > 0 && (
+            <span className="ml-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              {completedCount}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("cancelled")}
+          className={`flex items-center px-6 py-3 font-medium text-sm ${
+            activeTab === "cancelled" 
+              ? "border-b-2 border-indigo-500 text-indigo-500" 
+              : "text-gray-400 hover:text-white"
+          }`}
+        >
+          <FaTimes className="mr-2" />
+          Cancelled
+          {cancelledCount > 0 && (
+            <span className="ml-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              {cancelledCount}
+            </span>
+          )}
+        </button>
+        <button
           onClick={() => setActiveTab("all")}
           className={`flex items-center px-6 py-3 font-medium text-sm ${
             activeTab === "all" 
@@ -503,6 +602,22 @@ const RentalRequests = () => {
                   Rentals you've rejected will appear here.
                 </p>
               </>
+            ) : activeTab === "completed" ? (
+              <>
+                <FaCheckCircle className="text-6xl mb-4 text-blue-500 opacity-60" />
+                <h2 className="text-2xl font-semibold mb-2">No completed rental requests</h2>
+                <p className="max-w-md">
+                  Rentals you've marked as completed will appear here.
+                </p>
+              </>
+            ) : activeTab === "cancelled" ? (
+              <>
+                <FaTimes className="text-6xl mb-4 text-orange-500 opacity-60" />
+                <h2 className="text-2xl font-semibold mb-2">No cancelled rental requests</h2>
+                <p className="max-w-md">
+                  Rentals you've cancelled will appear here.
+                </p>
+              </>
             ) : (
               <>
                 <FaHistory className="text-6xl mb-4 text-blue-500 opacity-60" />
@@ -538,6 +653,17 @@ const RentalRequests = () => {
                     )}
                     {rental.owner && rental.owner._id === localStorage.getItem("userId") && (
                       <span className="ml-2 text-xs bg-green-500 text-white px-2 py-1 rounded">You Own This Car</span>
+                    )}
+                    {rental.viewRole && (
+                      <span className={`ml-2 text-xs px-2 py-1 rounded ${
+                        rental.viewRole === 'owner' 
+                          ? 'bg-green-700 text-white' 
+                          : rental.viewRole === 'renter'
+                          ? 'bg-blue-700 text-white'
+                          : 'bg-gray-700 text-white'
+                      }`}>
+                        {rental.viewRole === 'owner' ? 'You are the Owner' : rental.viewRole === 'renter' ? 'You are the Renter' : 'No Role'}
+                      </span>
                     )}
                   </h2>
                   <p className="text-gray-400">
@@ -587,6 +713,40 @@ const RentalRequests = () => {
                         <FaTimes className="mr-2" />
                       )}
                       Reject
+                    </button>
+                  </div>
+                )}
+                
+                {rental.status === 'accepted' && rental.viewRole === 'owner' && (
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => handleStatusUpdate(rental._id, 'completed')}
+                      disabled={processingId === rental._id}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300 flex items-center"
+                    >
+                      {processingId === rental._id ? (
+                        <FaSpinner className="animate-spin mr-2" />
+                      ) : (
+                        <FaCheckCircle className="mr-2" />
+                      )}
+                      Mark as Complete
+                    </button>
+                  </div>
+                )}
+                
+                {(rental.status === 'pending' || rental.status === 'accepted') && rental.viewRole === 'renter' && (
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => handleStatusUpdate(rental._id, 'cancelled')}
+                      disabled={processingId === rental._id}
+                      className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-300 flex items-center"
+                    >
+                      {processingId === rental._id ? (
+                        <FaSpinner className="animate-spin mr-2" />
+                      ) : (
+                        <FaTimes className="mr-2" />
+                      )}
+                      Cancel Rental
                     </button>
                   </div>
                 )}

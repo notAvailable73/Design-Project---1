@@ -44,9 +44,16 @@ const MyRentals = () => {
         )
       );
       
-      toast.success("Rental request cancelled successfully");
+      toast.success("Rental request cancelled successfully. The owner will be notified.");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to cancel rental request");
+      console.error("Error cancelling rental:", error);
+      const errorMessage = error.response?.data?.message || "Failed to cancel rental request";
+      toast.error(errorMessage);
+      
+      // Show additional details if available
+      if (error.response?.data?.details) {
+        console.log("Error details:", error.response.data.details);
+      }
     } finally {
       setProcessingId(null);
     }
@@ -221,7 +228,7 @@ const MyRentals = () => {
               <div className="flex flex-col md:flex-row justify-between">
                 <div className="mb-4 md:mb-0">
                   <h2 className="text-xl font-semibold text-white flex items-center">
-                    {rental.car.brand} {rental.car.model} ({rental.car.year})
+                    {rental.car.make} {rental.car.model} ({rental.car.year})
                     {rental.status === 'accepted' && (
                       <span className="ml-3 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                         ACCEPTED
@@ -230,6 +237,16 @@ const MyRentals = () => {
                     {rental.status === 'rejected' && (
                       <span className="ml-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                         REJECTED
+                      </span>
+                    )}
+                    {rental.status === 'completed' && (
+                      <span className="ml-3 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        COMPLETED
+                      </span>
+                    )}
+                    {rental.status === 'cancelled' && (
+                      <span className="ml-3 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        CANCELLED
                       </span>
                     )}
                   </h2>
