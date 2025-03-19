@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaPlus, FaCar, FaEdit, FaTrash, FaTag } from "react-icons/fa";
 import axiosInstance from "../utils/axiosInstance";
+import { useVerificationCheck } from "../components/VerificationCheck";
 
 const MyCars = () => {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ const MyCars = () => {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null); // Track which car is being deleted
   const [listedCarIds, setListedCarIds] = useState([]); // Track which cars are listed for rent
+  const { redirectToProfile } = useVerificationCheck();
 
   useEffect(() => {
     fetchCars();
@@ -75,6 +77,13 @@ const MyCars = () => {
     }
   };
 
+  // Handle navigation to Add Car page with verification check
+  const navigateToAddCar = () => {
+    if (redirectToProfile('add a car')) {
+      navigate("/add-car");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-black to-indigo-950 text-white p-8">
       <div className="max-w-6xl mx-auto">
@@ -82,7 +91,7 @@ const MyCars = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">My Cars</h1>
           <button
-            onClick={() => navigate("/add-car")}
+            onClick={navigateToAddCar}
             className="flex items-center space-x-2 px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
           >
             <FaPlus />
@@ -106,7 +115,7 @@ const MyCars = () => {
                 </h2>
                 <p className="mb-6">Add your first car to get started.</p>
                 <button
-                  onClick={() => navigate("/add-car")}
+                  onClick={navigateToAddCar}
                   className="px-6 py-3 bg-purple-600 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
                 >
                   Add Your First Car

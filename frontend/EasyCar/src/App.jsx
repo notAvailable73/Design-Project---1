@@ -14,6 +14,7 @@ import Header from "./components/Header";
 import { ToastContainer } from "react-toastify"; // Import ToastContainer
 import "react-toastify/dist/ReactToastify.css"; // Import the CSS for toast notifications
 import ProtectedRoute from "./components/ProtectedRoute";
+import VerifiedRoute from "./components/VerifiedRoute";
 import Sidebar from "./components/SideBar";
 import AddCar from "./pages/AddCar";
 import ViewAllCars from "./pages/ViewAllCars";
@@ -62,9 +63,26 @@ export default function App() {
                 <Route path="/all-cars" element={<ViewAllCars />} />
                 <Route path="/rent-car" element={<RentACar />} />
                 <Route path="/car-listings/:id" element={<CarListingDetails />} />
-                <Route path="/add-car" element={<AddCar />} />
+                {/* Routes requiring verification */}
+                <Route 
+                  path="/add-car" 
+                  element={
+                    <VerifiedRoute 
+                      element={<AddCar />} 
+                      action="add a car"
+                    />
+                  } 
+                />
                 <Route path="/my-cars" element={<MyCars />} />
-                <Route path="/list-car" element={<ListCarForRent />} />
+                <Route 
+                  path="/list-car" 
+                  element={
+                    <VerifiedRoute 
+                      element={<ListCarForRent />}
+                      action="list a car for rent"
+                    />
+                  } 
+                />
                 <Route path="/my-listings" element={<MyListings />} />
                 <Route path="/my-listings/:id" element={<CarListingDetails />} />
                 <Route path="/chats" element={<ChatListPage />} />
