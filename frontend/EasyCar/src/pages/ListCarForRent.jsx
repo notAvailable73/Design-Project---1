@@ -112,18 +112,32 @@ const ListCarForRent = () => {
       setLoading(true);
       // Get all user cars
       const carsResponse = await axiosInstance.get("/api/cars/user/me");
-      setAllUserCars(carsResponse.data);
+      const userCarsData = carsResponse.data || [];
+      setAllUserCars(userCarsData);
+      
+      // Show message if no cars available
+      if (userCarsData.length === 0) {
+        toast.info("You don't have any cars yet. Please add a car first.");
+      }
       
       // Get car listings to identify which cars are already listed
       const listingsResponse = await axiosInstance.get("/api/car-listings/owner/listings");
       
       // Extract car IDs that are already listed
-      const listedIds = listingsResponse.data.map(listing => listing.car._id);
+      const listedIds = (listingsResponse.data || [])
+        .filter(listing => listing && listing.car) // Filter out null listings or listings with null car
+        .map(listing => listing.car._id);
       setListedCarIds(listedIds);
       
       // Filter out cars that are already listed for the available selection
-      const availableCars = carsResponse.data.filter(car => !listedIds.includes(car._id));
+      const availableCars = userCarsData
+        .filter(car => car && !listedIds.includes(car._id));
       setUserCars(availableCars);
+      
+      // Show message if all cars are already listed
+      if (userCarsData.length > 0 && availableCars.length === 0) {
+        toast.info("All your cars are already listed. Add a new car or remove an existing listing to create a new one.");
+      }
       
       setLoading(false);
     } catch (error) {
@@ -152,10 +166,28 @@ const ListCarForRent = () => {
 
   // Handle car selection
   const handleCarSelect = (carId) => {
+    if (!carId) {
+      toast.error("Please select a valid car");
+      return;
+    }
+    
+    // Find the selected car object
+    const selectedCar = allUserCars.find(car => car && car._id === carId);
+    
+    if (!selectedCar) {
+      toast.error("Selected car not found");
+      return;
+    }
+    
     // Only allow selecting cars that aren't already listed
     if (!listedCarIds.includes(carId)) {
       setSelectedCar(carId);
       setShowDropdown(false);
+      
+      setFormData(prev => ({
+        ...prev,
+        carId
+      }));
     }
   };
 

@@ -16,6 +16,7 @@ import { useVerificationCheck } from "../components/VerificationCheck";
 
 export default function Sidebar() {
   const [userProfile, setUserProfile] = useState(null); // User profile data
+  const [pendingRequests, setPendingRequests] = useState(0);
   const navigate = useNavigate();
   const { redirectToProfile } = useVerificationCheck();
 
@@ -31,8 +32,35 @@ export default function Sidebar() {
       setUserProfile(null);
     }
   };
+
+  const fetchPendingRequests = async () => {
+    try {
+      // Only fetch if user is logged in
+      if (localStorage.getItem("token")) {
+        const response = await axiosInstance.get("/api/rentals");
+        
+        // Filter rentals where the current user is the owner and status is pending
+        const ownerPendingRentals = response.data.filter(rental => 
+          rental.owner._id === localStorage.getItem("userId") && 
+          rental.status === 'pending'
+        );
+        
+        setPendingRequests(ownerPendingRentals.length);
+      }
+    } catch (err) {
+      console.error("Failed to fetch pending rental requests:", err);
+    }
+  };
+
   useEffect(() => {
     fetchUserProfile();
+    fetchPendingRequests();
+    
+    // Set up interval to check for new requests every minute
+    const intervalId = setInterval(fetchPendingRequests, 60000);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
   }, [navigate]);
 
   const handleLogout = () => {
@@ -116,6 +144,21 @@ export default function Sidebar() {
             >
               <FaHistory className="w-6 h-6" />
               <span>My Rentals</span>
+            </Link>
+            
+            <Link
+              to="/rental-requests"
+              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition-colors duration-300"
+            >
+              <MdCarRental className="w-6 h-6" />
+              <span className="flex items-center">
+                Rental Requests
+                {userProfile && pendingRequests > 0 && (
+                  <span className="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    {pendingRequests}
+                  </span>
+                )}
+              </span>
             </Link>
           </div>
           

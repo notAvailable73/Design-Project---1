@@ -168,8 +168,12 @@ export const createRental = async (req, res) => {
         if (!chat) {
             chat = new Chat({
                 participants: [req.user._id, carListing.owner._id],
-                messages: []
+                messages: [],
+                relatedCar: carListing.car._id
             });
+            await chat.save();
+        } else if (!chat.relatedCar) {
+            chat.relatedCar = carListing.car._id;
             await chat.save();
         }
         

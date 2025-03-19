@@ -113,6 +113,8 @@ const CarListingDetails = () => {
   
   // Toggle listing active status
   const toggleListingStatus = async () => {
+    if (!listing) return;
+    
     try {
       setToggling(true);
       await axiosInstance.put(`/api/car-listings/${id}`, {
@@ -350,7 +352,7 @@ const CarListingDetails = () => {
         <div className="bg-gray-800 rounded-lg overflow-hidden mb-8">
           {/* Car Images */}
           <div className="h-64 md:h-96 bg-gray-700 relative">
-            {listing.car.images && listing.car.images.length > 0 ? (
+            {listing && listing.car && listing.car.images && listing.car.images.length > 0 ? (
               <img
                 src={listing.car.images[0].url}
                 alt={`${listing.car.brand} ${listing.car.model}`}
@@ -367,16 +369,18 @@ const CarListingDetails = () => {
           <div className="p-6">
             <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-6">
               <div>
-                <h1 className="text-3xl font-bold mb-2">{listing.car.brand} {listing.car.model}</h1>
-                <p className="text-gray-300 text-lg">{listing.car.year}</p>
+                <h1 className="text-3xl font-bold mb-2">
+                  {listing && listing.car ? `${listing.car.brand} ${listing.car.model}` : 'Car Details'}
+                </h1>
+                <p className="text-gray-300 text-lg">{listing && listing.car ? listing.car.year : ''}</p>
               </div>
               <div className="mt-4 md:mt-0 flex flex-col items-start md:items-end">
                 <div className="flex items-center">
-                  <span className="text-2xl font-bold text-green-500">${listing.pricePerDay}</span>
+                  <span className="text-2xl font-bold text-green-500">${listing ? listing.pricePerDay : '0'}</span>
                   <span className="text-gray-400 ml-1">/day</span>
                 </div>
                 <p className="text-sm text-gray-400 mt-1">
-                  Available: {formatDate(listing.availableFrom)} - {formatDate(listing.availableTo)}
+                  Available: {listing ? formatDate(listing.availableFrom) : 'N/A'} - {listing ? formatDate(listing.availableTo) : 'N/A'}
                 </p>
               </div>
             </div>
@@ -387,7 +391,7 @@ const CarListingDetails = () => {
                 <FaUser className="text-purple-500 mr-3" />
                 <div>
                   <p className="text-sm text-gray-400">Seats</p>
-                  <p className="font-semibold">{listing.car.seats}</p>
+                  <p className="font-semibold">{listing && listing.car ? listing.car.seats : 'N/A'}</p>
                 </div>
               </div>
               
@@ -395,7 +399,7 @@ const CarListingDetails = () => {
                 <FaGasPump className="text-purple-500 mr-3" />
                 <div>
                   <p className="text-sm text-gray-400">Fuel Type</p>
-                  <p className="font-semibold">{listing.car.fuelType}</p>
+                  <p className="font-semibold">{listing && listing.car ? listing.car.fuelType : 'N/A'}</p>
                 </div>
               </div>
               
@@ -403,7 +407,7 @@ const CarListingDetails = () => {
                 <FaCog className="text-purple-500 mr-3" />
                 <div>
                   <p className="text-sm text-gray-400">Transmission</p>
-                  <p className="font-semibold">{listing.car.transmission}</p>
+                  <p className="font-semibold">{listing && listing.car ? listing.car.transmission : 'N/A'}</p>
                 </div>
               </div>
             </div>
@@ -411,7 +415,7 @@ const CarListingDetails = () => {
             {/* Car Description */}
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4">About this car</h2>
-              <p className="text-gray-300">{listing.car.description}</p>
+              <p className="text-gray-300">{listing && listing.car ? listing.car.description : 'No description available'}</p>
             </div>
             
             {/* Location */}
@@ -421,7 +425,9 @@ const CarListingDetails = () => {
                 Location
               </h2>
               <p className="text-gray-300 mb-2">
-                {listing.location?.properties?.district}, {listing.location?.properties?.subDistrict}
+                {listing && listing.location && listing.location.properties ? 
+                  `${listing.location.properties.district || 'N/A'}, ${listing.location.properties.subDistrict || 'N/A'}` : 
+                  'Location not specified'}
               </p>
               <p className="text-sm text-gray-400">
                 Exact address will be provided after booking confirmation
@@ -434,13 +440,15 @@ const CarListingDetails = () => {
               <div className="flex items-center">
                 <FaUserCircle className="text-purple-500 text-4xl mr-4" />
                 <div>
-                  <p className="font-semibold">{listing.owner?.name}</p>
-                  <button
-                    onClick={() => navigate(`/user/${listing.owner?._id}`)}
-                    className="text-sm text-purple-400 hover:text-purple-300 mt-1"
-                  >
-                    View Profile
-                  </button>
+                  <p className="font-semibold">{listing && listing.owner ? listing.owner.name : 'Unknown'}</p>
+                  {listing && listing.owner && (
+                    <button
+                      onClick={() => navigate(`/user/${listing.owner._id}`)}
+                      className="text-sm text-purple-400 hover:text-purple-300 mt-1"
+                    >
+                      View Profile
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -462,16 +470,20 @@ const CarListingDetails = () => {
               
               <button
                 onClick={() => {
-                  // Check if user is verified before allowing to message
-                  if (requireVerification('message the owner')) {
-                    // Create a new chat with the owner or navigate to existing chat
-                    navigate(`/chats`, { state: { userId: listing.owner?._id, carId: listing.car?._id } });
+                  if (requireVerification('contact the owner')) {
+                    return;
                   }
+                  navigate(`/chats`, { 
+                    state: { 
+                      userId: listing && listing.owner ? listing.owner._id : null, 
+                      carId: listing && listing.car ? listing.car._id : null 
+                    } 
+                  });
                 }}
                 className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
               >
                 <FaComment className="mr-2" />
-                Message Owner
+                Contact Owner
               </button>
             </div>
           </div>
@@ -491,8 +503,8 @@ const CarListingDetails = () => {
                   endDate={bookingFormData.endDate}
                   onStartDateChange={(date) => handleDateChange('startDate', date)}
                   onEndDateChange={(date) => handleDateChange('endDate', date)}
-                  minDate={new Date(listing.availableFrom)}
-                  maxDate={new Date(listing.availableTo)}
+                  minDate={listing ? new Date(listing.availableFrom) : new Date()}
+                  maxDate={listing ? new Date(listing.availableTo) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)}
                 />
                 
                 {/* Availability Check Button */}
@@ -540,7 +552,7 @@ const CarListingDetails = () => {
                 <div className="mb-6 p-4 bg-gray-700 rounded-lg">
                   <h3 className="text-lg font-semibold mb-3">Price Summary</h3>
                   <div className="flex justify-between mb-2">
-                    <span>${listing.pricePerDay} x {Math.ceil((new Date(bookingFormData.endDate) - new Date(bookingFormData.startDate)) / (1000 * 60 * 60 * 24))} days</span>
+                    <span>${listing ? listing.pricePerDay : 0} x {Math.ceil((new Date(bookingFormData.endDate) - new Date(bookingFormData.startDate)) / (1000 * 60 * 60 * 24))} days</span>
                     <span>${calculateTotalPrice()}</span>
                   </div>
                   <div className="border-t border-gray-600 pt-2 mt-2 flex justify-between font-bold">

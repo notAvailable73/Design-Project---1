@@ -64,7 +64,10 @@ const ChatWindow = ({ chat, socket, currentUserId }) => {
     <div className="min-h-screen flex flex-col bg-gray-900">
       {/* Car Details */}
       <p className="text-white text-3xl flex justify-center mt-4">
-        {`${chat.relatedCar.brand} ${chat.relatedCar.model} ${chat.relatedCar.year}`}
+        {chat && chat.relatedCar ? 
+          `${chat.relatedCar.brand || 'Unknown'} ${chat.relatedCar.model || ''} ${chat.relatedCar.year || ''}` : 
+          'Car Details Not Available'
+        }
       </p>
 
       {/* Messages Section */}

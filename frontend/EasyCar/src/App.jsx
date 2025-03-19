@@ -27,6 +27,8 @@ import CarListingDetails from "./pages/CarListingDetails";
 import MyCars from "./pages/MyCars";
 import RentACar from "./pages/RentACar";
 import LocationTracker from "./pages/LocationTracker";
+import MyRentals from "./pages/MyRentals";
+import RentalRequests from "./pages/RentalRequests";
 
 export default function App() {
   return (
@@ -92,6 +94,8 @@ export default function App() {
                 />
                 <Route path="/chats" element={<ChatListPage />} />
                 <Route path="/chats/:chatId" element={<ChatPage />} />
+                <Route path="/my-rentings" element={<MyRentals />} />
+                <Route path="/rental-requests" element={<RentalRequests />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

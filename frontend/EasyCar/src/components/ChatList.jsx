@@ -13,7 +13,10 @@ const ChatList = ({ chats, onSelectChat }) => {
             onClick={() => onSelectChat(chat)}
           >
             <p className="text-white font-semibold text-lg">
-              {`${chat.relatedCar.brand} ${chat.relatedCar.model} ${chat.relatedCar.year}`}
+              {chat.relatedCar ? 
+                `${chat.relatedCar.brand || 'Unknown'} ${chat.relatedCar.model || ''} ${chat.relatedCar.year || ''}` : 
+                'Car Details Not Available'
+              }
             </p>
             {chat.lastMessage && (
               <p className="text-gray-400 text-sm mt-1 truncate">

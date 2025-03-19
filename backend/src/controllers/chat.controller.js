@@ -86,7 +86,7 @@ export const createChat = async (req, res) => {
     // Create a new chat with the related car
     const chat = await Chat.create({
       participants: [req.user._id, participantId],
-      relatedCar: [carId],
+      relatedCar: carId,
     });
 
     await chat.populate("participants", "name email");

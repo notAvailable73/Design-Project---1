@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { toast } from "react-toastify";
-import { FaCheck, FaTimes, FaSpinner } from "react-icons/fa";
+import { FaCheck, FaTimes, FaSpinner, FaBell, FaHistory, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 const RentalRequests = () => {
   const [rentals, setRentals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+  const [activeTab, setActiveTab] = useState("pending");
 
   useEffect(() => {
     fetchRentals();
@@ -51,6 +52,20 @@ const RentalRequests = () => {
     }
   };
 
+  // Filter rentals based on active tab
+  const filteredRentals = rentals.filter(rental => {
+    if (activeTab === "pending") return rental.status === "pending";
+    if (activeTab === "accepted") return rental.status === "accepted";
+    if (activeTab === "rejected") return rental.status === "rejected";
+    if (activeTab === "all") return true;
+    return false;
+  });
+
+  // Count rentals by status
+  const pendingCount = rentals.filter(r => r.status === "pending").length;
+  const acceptedCount = rentals.filter(r => r.status === "accepted").length;
+  const rejectedCount = rentals.filter(r => r.status === "rejected").length;
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -73,21 +88,103 @@ const RentalRequests = () => {
         Rental Requests
       </h1>
 
-      {rentals.length === 0 ? (
-        <div className="text-center text-gray-400 text-xl">
-          No rental requests found.
+      {/* Status Tabs */}
+      <div className="flex flex-wrap mb-6 border-b border-gray-700">
+        <button
+          onClick={() => setActiveTab("pending")}
+          className={`flex items-center px-6 py-3 font-medium text-sm ${
+            activeTab === "pending" 
+              ? "border-b-2 border-indigo-500 text-indigo-500" 
+              : "text-gray-400 hover:text-white"
+          }`}
+        >
+          <FaBell className="mr-2" />
+          Pending
+          {pendingCount > 0 && (
+            <span className="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              {pendingCount}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("accepted")}
+          className={`flex items-center px-6 py-3 font-medium text-sm ${
+            activeTab === "accepted" 
+              ? "border-b-2 border-indigo-500 text-indigo-500" 
+              : "text-gray-400 hover:text-white"
+          }`}
+        >
+          <FaCheckCircle className="mr-2" />
+          Accepted
+          {acceptedCount > 0 && (
+            <span className="ml-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              {acceptedCount}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("rejected")}
+          className={`flex items-center px-6 py-3 font-medium text-sm ${
+            activeTab === "rejected" 
+              ? "border-b-2 border-indigo-500 text-indigo-500" 
+              : "text-gray-400 hover:text-white"
+          }`}
+        >
+          <FaTimesCircle className="mr-2" />
+          Rejected
+          {rejectedCount > 0 && (
+            <span className="ml-2 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              {rejectedCount}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("all")}
+          className={`flex items-center px-6 py-3 font-medium text-sm ${
+            activeTab === "all" 
+              ? "border-b-2 border-indigo-500 text-indigo-500" 
+              : "text-gray-400 hover:text-white"
+          }`}
+        >
+          <FaHistory className="mr-2" />
+          All Requests
+          <span className="ml-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+            {rentals.length}
+          </span>
+        </button>
+      </div>
+
+      {filteredRentals.length === 0 ? (
+        <div className="text-center text-gray-400 text-xl p-10 bg-gray-800 rounded-lg">
+          {activeTab === "pending" 
+            ? "No pending rental requests found."
+            : activeTab === "accepted"
+            ? "No accepted rental requests."
+            : activeTab === "rejected"
+            ? "No rejected rental requests."
+            : "No rental requests found."}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6">
-          {rentals.map((rental) => (
+          {filteredRentals.map((rental) => (
             <div 
               key={rental._id} 
-              className="bg-gray-800 rounded-lg overflow-hidden shadow-lg p-6"
+              className={`bg-gray-800 rounded-lg overflow-hidden shadow-lg p-6 border-l-4 ${
+                rental.status === 'pending' ? 'border-yellow-500' :
+                rental.status === 'accepted' ? 'border-green-500' :
+                rental.status === 'rejected' ? 'border-red-500' :
+                'border-gray-800'
+              }`}
             >
               <div className="flex flex-col md:flex-row justify-between">
                 <div className="mb-4 md:mb-0">
-                  <h2 className="text-xl font-semibold text-white">
+                  <h2 className="text-xl font-semibold text-white flex items-center">
                     {rental.car.brand} {rental.car.model} ({rental.car.year})
+                    {rental.status === 'pending' && (
+                      <span className="ml-3 bg-yellow-500 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">
+                        NEW REQUEST
+                      </span>
+                    )}
                   </h2>
                   <p className="text-gray-400">
                     Requested by: {rental.renter.name}
@@ -105,6 +202,9 @@ const RentalRequests = () => {
                       rental.status === 'rejected' ? 'text-red-500' : 
                       'text-gray-400'
                     }`}>{rental.status.charAt(0).toUpperCase() + rental.status.slice(1)}</span>
+                  </p>
+                  <p className="text-gray-400 mt-2">
+                    Requested on: {new Date(rental.createdAt).toLocaleDateString()} at {new Date(rental.createdAt).toLocaleTimeString()}
                   </p>
                 </div>
 

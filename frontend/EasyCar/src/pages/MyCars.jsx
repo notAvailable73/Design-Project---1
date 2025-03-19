@@ -22,6 +22,12 @@ const MyCars = () => {
       setLoading(true);
       // Get user's cars
       const carsResponse = await axiosInstance.get("/api/cars/user/me");
+      const userCarsData = carsResponse.data || [];
+
+      // Show message if no cars available
+      if (userCarsData.length === 0) {
+        toast.info("You don't have any cars yet. Add a car to get started.");
+      }
 
       // Get car listings to identify which cars are already listed
       const listingsResponse = await axiosInstance.get(
@@ -29,11 +35,13 @@ const MyCars = () => {
       );
 
       // Extract car IDs that are already listed
-      const listedIds = listingsResponse.data.map((listing) => listing.car._id);
+      const listedIds = (listingsResponse.data || [])
+        .filter(listing => listing && listing.car)
+        .map((listing) => listing.car._id);
       console.log(listedIds);
       setListedCarIds(listedIds);
-      console.log(carsResponse.data);
-      setCars(carsResponse.data);
+      console.log(userCarsData);
+      setCars(userCarsData.filter(car => car !== null));
       setLoading(false);
     } catch (error) {
       console.error("Error fetching cars:", error);
@@ -43,26 +51,25 @@ const MyCars = () => {
   };
 
   const deleteCar = async (carId) => {
+    if (!carId) {
+      toast.error("Invalid car ID");
+      return;
+    }
+    
     try {
       setDeleting(carId);
       await axiosInstance.delete(`/api/cars/${carId}`);
 
       // Remove car from state
-      setCars((prevCars) => prevCars.filter((car) => car._id !== carId));
+      setCars((prevCars) => prevCars.filter((car) => car && car._id !== carId));
+      
       toast.success("Car deleted successfully");
+      setDeleting(null);
     } catch (error) {
       console.error("Error deleting car:", error);
-      const errorMsg = error.response?.data?.message || "Failed to delete car";
-
-      // Special handling for cars that can't be deleted because they're in active listings
-      if (error.response?.status === 400 && errorMsg.includes("listing")) {
-        toast.error(
-          "Can't delete car as it's currently listed for rent. Remove all listings first."
-        );
-      } else {
-        toast.error(errorMsg);
-      }
-    } finally {
+      toast.error(
+        error.response?.data?.message || "Failed to delete car"
+      );
       setDeleting(null);
     }
   };
